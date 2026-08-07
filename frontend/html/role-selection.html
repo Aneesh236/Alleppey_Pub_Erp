@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Choose Role | Alleppey Pub ERP</title>
+
+    <link rel="stylesheet"
+          href="../css/role-selection.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+</head>
+
+<body>
+
+    <!-- Background Layers -->
+
+    <div class="background-overlay"></div>
+
+    <div class="background-glow glow-left"></div>
+
+    <div class="background-glow glow-right"></div>
+
+
+    <!-- Main Content -->
+
+    <main class="role-wrapper">
+
+        <section class="role-container">
+
+            <!-- Header -->
+
+            <header class="role-header">
+
+                <div class="logo-wrapper">
+
+                    <div class="logo-glow"></div>
+
+                    <img src="../img/logo.jpeg"
+                         class="logo"
+                         alt="Alleppey Pub and Bar logo">
+
+                </div>
+
+
+                <span class="system-label">
+                    Alleppey Pub & Bar ERP
+                </span>
+
+
+                <h1>
+                    Choose <span>Your Role</span>
+                </h1>
+
+
+                <p class="subtitle">
+                    Select how you want to access the pub management system.
+                </p>
+
+            </header>
+
+
+
+            <!-- Role Cards -->
+
+            <div class="cards">
+
+
+                <!-- Customer -->
+
+                <article class="role-card customer-card"
+                         onclick="customerLogin()"
+                         tabindex="0"
+                         role="button"
+                         onkeydown="handleCardKey(event, customerLogin)">
+
+                    <div class="card-top">
+
+                        <span class="role-number">
+                            01
+                        </span>
+
+                        <span class="role-badge">
+                            Public Access
+                        </span>
+
+                    </div>
+
+
+                    <div class="icon-wrapper">
+
+                        <div class="icon">
+
+                            <i class="fa-solid fa-user"></i>
+
+                        </div>
+
+                    </div>
+
+
+                    <h2>Customer</h2>
+
+
+                    <p>
+                        Browse food and drinks, add items to your cart,
+                        place orders and enjoy the pub experience.
+                    </p>
+
+
+                    <ul class="feature-list">
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            Browse menu
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            Place orders
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            View cart
+                        </li>
+
+                    </ul>
+
+
+                    <button type="button"
+                            class="role-button">
+
+                        Continue as Customer
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </button>
+
+                </article>
+
+
+
+                <!-- Employee -->
+
+                <article class="role-card employee-card"
+                         onclick="employeeLogin()"
+                         tabindex="0"
+                         role="button"
+                         onkeydown="handleCardKey(event, employeeLogin)">
+
+                    <div class="card-top">
+
+                        <span class="role-number">
+                            02
+                        </span>
+
+                        <span class="role-badge">
+                            Staff Access
+                        </span>
+
+                    </div>
+
+
+                    <div class="icon-wrapper">
+
+                        <div class="icon">
+
+                            <i class="fa-solid fa-user-tie"></i>
+
+                        </div>
+
+                    </div>
+
+
+                    <h2>Employee</h2>
+
+
+                    <p>
+                        Access waiter, chef and cashier operations for
+                        daily order handling and service management.
+                    </p>
+
+
+                    <ul class="feature-list">
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            Manage orders
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            Kitchen updates
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            Billing support
+                        </li>
+
+                    </ul>
+
+
+                    <button type="button"
+                            class="role-button">
+
+                        Continue as Employee
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </button>
+
+                </article>
+
+
+
+                <!-- Admin -->
+
+                <article class="role-card admin-card"
+                         onclick="adminLogin()"
+                         tabindex="0"
+                         role="button"
+                         onkeydown="handleCardKey(event, adminLogin)">
+
+                    <div class="card-top">
+
+                        <span class="role-number">
+                            03
+                        </span>
+
+                        <span class="role-badge">
+                            Full Access
+                        </span>
+
+                    </div>
+
+
+                    <div class="icon-wrapper">
+
+                        <div class="icon">
+
+                            <i class="fa-solid fa-crown"></i>
+
+                        </div>
+
+                    </div>
+
+
+                    <h2>Admin</h2>
+
+
+                    <p>
+                        Manage the complete ERP including menu, orders,
+                        inventory, employees, reports and settings.
+                    </p>
+
+
+                    <ul class="feature-list">
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            ERP dashboard
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            Reports and analytics
+                        </li>
+
+                        <li>
+                            <i class="fa-solid fa-check"></i>
+                            System management
+                        </li>
+
+                    </ul>
+
+
+                    <button type="button"
+                            class="role-button">
+
+                        Continue as Admin
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </button>
+
+                </article>
+
+            </div>
+
+
+
+            <!-- Footer -->
+
+            <footer class="bottom">
+
+                <div class="footer-item">
+
+                    <i class="fa-solid fa-shield-halved"></i>
+
+                    <div>
+
+                        <strong>Secure Access</strong>
+
+                        <span>Protected role-based login</span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="footer-divider"></div>
+
+
+                <div class="footer-item">
+
+                    <i class="fa-solid fa-headset"></i>
+
+                    <div>
+
+                        <strong>Need Help?</strong>
+
+                        <span>Contact system support</span>
+
+                    </div>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+
+    <script src="../js/role-selection.js"></script>
+
+</body>
+
+</html>
