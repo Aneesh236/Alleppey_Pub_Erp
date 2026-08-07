@@ -1,17 +1,44 @@
-"""Local AI service for the Alleppey Pub & Bar ERP demo."""
+"""FastAPI service for the Alleppey Pub & Bar ERP."""
 
 from collections import Counter, defaultdict
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 import re
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from database import (
+    InventoryItem,
+    MenuItem,
+    Order,
+    OrderItem,
+    get_db,
+    init_database,
+)
+from schemas import (
+    InventoryItemPayload,
+    MenuItemPayload,
+    OrderPayload,
+    OrderStatusPayload,
+)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_database()
+    yield
 
 
 app = FastAPI(
-    title="Alleppey Pub ERP AI",
-    description="Local customer recommendations and business analytics.",
-    version="2.0.0",
+    title="Alleppey Pub ERP API",
+    description="Database, ordering, inventory and analytics API.",
+    version="3.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -427,7 +454,7 @@ def customer_answer(question: str) -> str:
 @app.get("/")
 def root() -> dict[str, str]:
     return {
-        "message": "Alleppey Pub ERP AI backend is running.",
+        "message": "Alleppey Pub ERP API and database are running.",
         "docs": "Open http://127.0.0.1:8000/docs",
     }
 
@@ -436,8 +463,287 @@ def root() -> dict[str, str]:
 def health() -> dict[str, str]:
     return {
         "status": "ok",
-        "service": "Alleppey Pub ERP AI",
+        "service": "Alleppey Pub ERP API",
     }
+
+
+@app.get("/api/health")
+def api_health() -> dict[str, str]:
+    return health()
+
+
+def serialize_menu_item(item: MenuItem) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "image": item.image,
+        "name": item.name,
+        "description": item.description,
+        "category": item.category,
+        "price": item.price,
+        "status": item.status,
+    }
+
+
+def serialize_inventory_item(item: InventoryItem) -> dict[str, Any]:
+    return {
+        "id": item.id,
+        "name": item.name,
+        "category": item.category,
+        "currentStock": item.current_stock,
+        "unit": item.unit,
+        "minimumStock": item.minimum_stock,
+        "costPerUnit": item.cost_per_unit,
+        "supplier": item.supplier,
+        "notes": item.notes,
+    }
+
+
+def serialize_order(order: Order) -> dict[str, Any]:
+    created_at = order.created_at or datetime.now(timezone.utc)
+    return {
+        "id": order.id,
+        "customer": order.customer,
+        "phone": order.phone,
+        "table": order.table,
+        "type": (
+            f"Dine-in · Table {order.table}"
+            if order.order_type.lower().startswith("dine")
+            else order.order_type
+        ),
+        "orderType": order.order_type,
+        "payment": order.payment,
+        "items": [
+            {
+                "id": item.menu_item_id or item.id,
+                "name": item.name,
+                "description": item.description,
+                "image": item.image,
+                "price": item.price,
+                "qty": item.quantity,
+                "quantity": item.quantity,
+            }
+            for item in order.items
+        ],
+        "itemCount": sum(item.quantity for item in order.items),
+        "subtotal": order.subtotal,
+        "discount": order.discount,
+        "coupon": order.coupon,
+        "gst": order.gst,
+        "gstRate": order.gst_rate,
+        "serviceCharge": order.service_charge,
+        "total": order.total,
+        "notes": order.notes,
+        "status": order.status,
+        "date": created_at.isoformat(),
+        "createdAt": created_at.isoformat(),
+    }
+
+
+def commit_or_conflict(db: Session, message: str) -> None:
+    try:
+        db.commit()
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(status_code=409, detail=message) from error
+
+
+@app.get("/api/menu")
+def list_menu(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    items = db.scalars(select(MenuItem).order_by(MenuItem.id)).all()
+    return [serialize_menu_item(item) for item in items]
+
+
+@app.post("/api/menu", status_code=status.HTTP_201_CREATED)
+def create_menu_item(
+    payload: MenuItemPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    item = MenuItem(**payload.model_dump())
+    db.add(item)
+    commit_or_conflict(db, "A menu item with this name already exists.")
+    db.refresh(item)
+    return serialize_menu_item(item)
+
+
+@app.put("/api/menu/{item_id}")
+def update_menu_item(
+    item_id: int,
+    payload: MenuItemPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    item = db.get(MenuItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Menu item not found.")
+    for field, value in payload.model_dump().items():
+        setattr(item, field, value)
+    commit_or_conflict(db, "A menu item with this name already exists.")
+    db.refresh(item)
+    return serialize_menu_item(item)
+
+
+@app.delete("/api/menu/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_menu_item(item_id: int, db: Session = Depends(get_db)) -> Response:
+    item = db.get(MenuItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Menu item not found.")
+    db.delete(item)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/inventory")
+def list_inventory(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    items = db.scalars(select(InventoryItem).order_by(InventoryItem.id)).all()
+    return [serialize_inventory_item(item) for item in items]
+
+
+@app.post("/api/inventory", status_code=status.HTTP_201_CREATED)
+def create_inventory_item(
+    payload: InventoryItemPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    item = InventoryItem(
+        name=payload.name,
+        category=payload.category,
+        current_stock=payload.currentStock,
+        unit=payload.unit,
+        minimum_stock=payload.minimumStock,
+        cost_per_unit=payload.costPerUnit,
+        supplier=payload.supplier,
+        notes=payload.notes,
+    )
+    db.add(item)
+    commit_or_conflict(db, "An inventory item with this name already exists.")
+    db.refresh(item)
+    return serialize_inventory_item(item)
+
+
+@app.put("/api/inventory/{item_id}")
+def update_inventory_item(
+    item_id: int,
+    payload: InventoryItemPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    item = db.get(InventoryItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Inventory item not found.")
+    item.name = payload.name
+    item.category = payload.category
+    item.current_stock = payload.currentStock
+    item.unit = payload.unit
+    item.minimum_stock = payload.minimumStock
+    item.cost_per_unit = payload.costPerUnit
+    item.supplier = payload.supplier
+    item.notes = payload.notes
+    commit_or_conflict(db, "An inventory item with this name already exists.")
+    db.refresh(item)
+    return serialize_inventory_item(item)
+
+
+@app.delete("/api/inventory/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_inventory_item(item_id: int, db: Session = Depends(get_db)) -> Response:
+    item = db.get(InventoryItem, item_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Inventory item not found.")
+    db.delete(item)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def generate_order_id(db: Session, requested_id: Any = None) -> str:
+    if requested_id not in (None, ""):
+        candidate = str(requested_id).strip()
+        if candidate.isdigit():
+            candidate = f"ORD-{candidate}"
+        if db.get(Order, candidate) is None:
+            return candidate
+
+    existing_ids = db.scalars(select(Order.id)).all()
+    largest = 1000
+    for existing_id in existing_ids:
+        match = re.search(r"(\d+)$", existing_id)
+        if match:
+            largest = max(largest, int(match.group(1)))
+    return f"ORD-{largest + 1}"
+
+
+@app.get("/api/orders")
+def list_orders(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    orders = db.scalars(select(Order).order_by(Order.created_at.desc())).all()
+    return [serialize_order(order) for order in orders]
+
+
+@app.post("/api/orders", status_code=status.HTTP_201_CREATED)
+def create_order(
+    payload: OrderPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    order = Order(
+        id=generate_order_id(db, payload.id),
+        customer=payload.customer,
+        phone=payload.phone,
+        table=str(payload.table),
+        order_type=payload.orderType,
+        payment=payload.payment,
+        subtotal=payload.subtotal,
+        discount=payload.discount,
+        coupon=payload.coupon,
+        gst=payload.gst,
+        gst_rate=payload.gstRate,
+        service_charge=payload.serviceCharge,
+        total=payload.total,
+        notes=payload.notes,
+        status=payload.status,
+        created_at=payload.createdAt or datetime.now(timezone.utc),
+    )
+    order.items = [
+        OrderItem(
+            menu_item_id=str(item.id or ""),
+            name=item.name,
+            description=item.description,
+            image=item.image,
+            price=item.price,
+            quantity=item.qty or item.quantity,
+        )
+        for item in payload.items
+    ]
+    db.add(order)
+    commit_or_conflict(db, "An order with this ID already exists.")
+    db.refresh(order)
+    return serialize_order(order)
+
+
+@app.get("/api/orders/{order_id}")
+def get_order(order_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    order = db.get(Order, order_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    return serialize_order(order)
+
+
+@app.patch("/api/orders/{order_id}/status")
+def update_order_status(
+    order_id: str,
+    payload: OrderStatusPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    order = db.get(Order, order_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    order.status = payload.status
+    db.commit()
+    db.refresh(order)
+    return serialize_order(order)
+
+
+@app.delete("/api/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_order(order_id: str, db: Session = Depends(get_db)) -> Response:
+    order = db.get(Order, order_id)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    db.delete(order)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.post("/api/ai/analyse")
