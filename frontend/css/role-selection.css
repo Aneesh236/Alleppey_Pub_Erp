@@ -1,0 +1,785 @@
+/* =========================================
+   ALLEPPEY PUB ERP - ROLE SELECTION
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --gold: #d4af37;
+    --gold-light: #f1d36b;
+    --gold-dark: #99711d;
+    --white: #ffffff;
+    --muted: #a9a9a9;
+    --panel: rgba(13, 13, 13, 0.78);
+    --card: rgba(12, 12, 12, 0.88);
+    --border: rgba(212, 175, 55, 0.25);
+    --success: #45ad73;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+
+    position: relative;
+
+    color: var(--white);
+
+    font-family: "Poppins", sans-serif;
+
+    background:
+        url("../img/pub_bg.jpeg")
+        center center / cover
+        fixed no-repeat;
+}
+
+
+/* =========================================
+   BACKGROUND
+========================================= */
+
+.background-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(0, 0, 0, 0.45),
+            rgba(0, 0, 0, 0.95)
+        ),
+        linear-gradient(
+            135deg,
+            rgba(0, 0, 0, 0.75),
+            rgba(0, 0, 0, 0.92)
+        );
+
+    backdrop-filter: blur(3px);
+}
+
+.background-glow {
+    position: fixed;
+    z-index: 1;
+
+    border-radius: 50%;
+
+    filter: blur(110px);
+
+    opacity: 0.18;
+
+    pointer-events: none;
+}
+
+.glow-left {
+    width: 420px;
+    height: 420px;
+
+    top: -150px;
+    left: -140px;
+
+    background: var(--gold);
+
+    animation: floatLeft 8s ease-in-out infinite alternate;
+}
+
+.glow-right {
+    width: 460px;
+    height: 460px;
+
+    right: -180px;
+    bottom: -200px;
+
+    background: #8c6417;
+
+    animation: floatRight 9s ease-in-out infinite alternate;
+}
+
+
+/* =========================================
+   MAIN WRAPPER
+========================================= */
+
+.role-wrapper {
+    min-height: 100vh;
+
+    position: relative;
+    z-index: 5;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 35px 24px;
+}
+
+
+/* =========================================
+   CONTAINER
+========================================= */
+
+.role-container {
+    width: min(1380px, 100%);
+
+    padding: 34px 38px 28px;
+
+    position: relative;
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18, 18, 18, 0.84),
+            rgba(6, 6, 6, 0.72)
+        );
+
+    border: 1px solid var(--border);
+    border-radius: 28px;
+
+    box-shadow:
+        0 35px 90px rgba(0, 0, 0, 0.68),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    backdrop-filter: blur(20px);
+
+    animation: containerEntrance 0.8s ease forwards;
+}
+
+.role-container::before {
+    content: "";
+
+    width: 300px;
+    height: 300px;
+
+    position: absolute;
+    top: -190px;
+    right: -130px;
+
+    background: rgba(212, 175, 55, 0.09);
+
+    border-radius: 50%;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.role-header {
+    max-width: 780px;
+
+    margin: 0 auto 34px;
+
+    position: relative;
+    z-index: 2;
+
+    text-align: center;
+}
+
+.logo-wrapper {
+    width: 105px;
+    height: 105px;
+
+    margin: 0 auto 17px;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-glow {
+    position: absolute;
+    inset: 5px;
+
+    background: rgba(212, 175, 55, 0.25);
+
+    border-radius: 50%;
+
+    filter: blur(20px);
+
+    animation: logoGlow 2s ease-in-out infinite alternate;
+}
+
+.logo {
+    width: 92px;
+    height: 92px;
+
+    position: relative;
+    z-index: 2;
+
+    object-fit: cover;
+
+    border: 2px solid rgba(212, 175, 55, 0.55);
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 7px rgba(212, 175, 55, 0.06),
+        0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+.system-label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: var(--gold);
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.4px;
+    text-transform: uppercase;
+}
+
+.role-header h1 {
+    color: var(--white);
+
+    font-family: "Cinzel", serif;
+
+    font-size: clamp(34px, 5vw, 50px);
+    line-height: 1.15;
+    letter-spacing: 1px;
+}
+
+.role-header h1 span {
+    color: var(--gold-light);
+
+    text-shadow:
+        0 4px 18px rgba(212, 175, 55, 0.2);
+}
+
+.subtitle {
+    margin-top: 10px;
+
+    color: #b6b6b6;
+
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+
+/* =========================================
+   ROLE CARDS
+========================================= */
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+
+    position: relative;
+    z-index: 2;
+}
+
+.role-card {
+    min-height: 470px;
+
+    padding: 25px;
+
+    position: relative;
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20, 20, 20, 0.95),
+            rgba(7, 7, 7, 0.93)
+        );
+
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 20px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 18px 38px rgba(0, 0, 0, 0.38);
+
+    transition:
+        transform 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.role-card::before {
+    content: "";
+
+    width: 190px;
+    height: 190px;
+
+    position: absolute;
+    top: -120px;
+    right: -95px;
+
+    background: rgba(212, 175, 55, 0.07);
+
+    border-radius: 50%;
+
+    transition: 0.35s ease;
+}
+
+.role-card:hover,
+.role-card:focus {
+    outline: none;
+
+    border-color: rgba(212, 175, 55, 0.75);
+
+    transform: translateY(-9px);
+
+    box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(212, 175, 55, 0.12);
+}
+
+.role-card:hover::before,
+.role-card:focus::before {
+    transform: scale(1.25);
+}
+
+
+/* =========================================
+   CARD TOP
+========================================= */
+
+.card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.role-number {
+    color: rgba(212, 175, 55, 0.5);
+
+    font-family: "Cinzel", serif;
+
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.role-badge {
+    padding: 6px 10px;
+
+    color: var(--gold-light);
+    background: rgba(212, 175, 55, 0.08);
+
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 50px;
+
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+}
+
+
+/* =========================================
+   ICON
+========================================= */
+
+.icon-wrapper {
+    margin: 25px 0 20px;
+
+    display: flex;
+    justify-content: center;
+}
+
+.icon {
+    width: 92px;
+    height: 92px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--gold-light);
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(212, 175, 55, 0.14),
+            rgba(212, 175, 55, 0.03)
+        );
+
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 50%;
+
+    font-size: 34px;
+
+    box-shadow:
+        0 0 0 8px rgba(212, 175, 55, 0.04),
+        0 15px 30px rgba(0, 0, 0, 0.4);
+
+    transition: 0.3s ease;
+}
+
+.role-card:hover .icon {
+    color: #111111;
+    background: linear-gradient(
+        135deg,
+        var(--gold),
+        var(--gold-light)
+    );
+
+    transform: scale(1.06) rotate(3deg);
+}
+
+
+/* =========================================
+   CARD CONTENT
+========================================= */
+
+.role-card h2 {
+    margin-bottom: 12px;
+
+    color: var(--white);
+
+    text-align: center;
+
+    font-size: 25px;
+}
+
+.role-card > p {
+    min-height: 72px;
+
+    margin-bottom: 20px;
+
+    color: #b1b1b1;
+
+    text-align: center;
+
+    font-size: 12px;
+    line-height: 1.75;
+}
+
+.feature-list {
+    margin-bottom: 24px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    list-style: none;
+}
+
+.feature-list li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    color: #cccccc;
+
+    font-size: 11px;
+}
+
+.feature-list i {
+    width: 20px;
+    height: 20px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #111111;
+    background: var(--gold);
+
+    border-radius: 50%;
+
+    font-size: 9px;
+}
+
+
+/* =========================================
+   BUTTON
+========================================= */
+
+.role-button {
+    width: 100%;
+    min-height: 50px;
+
+    margin-top: auto;
+    padding: 0 17px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    color: #111111;
+    background: linear-gradient(
+        135deg,
+        var(--gold),
+        var(--gold-light)
+    );
+
+    border: none;
+    border-radius: 11px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.25s ease;
+}
+
+.role-button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 24px rgba(212, 175, 55, 0.24);
+}
+
+.role-button i {
+    transition: transform 0.25s ease;
+}
+
+.role-button:hover i {
+    transform: translateX(4px);
+}
+
+
+/* =========================================
+   INDIVIDUAL CARD ACCENTS
+========================================= */
+
+.customer-card:hover .role-badge {
+    color: #79dca4;
+    border-color: rgba(69, 173, 115, 0.45);
+}
+
+.employee-card:hover .role-badge {
+    color: #7cc9ff;
+    border-color: rgba(67, 157, 218, 0.45);
+}
+
+.admin-card:hover .role-badge {
+    color: var(--gold-light);
+    border-color: rgba(212, 175, 55, 0.55);
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
+
+.bottom {
+    margin-top: 28px;
+    padding-top: 22px;
+
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.footer-item > i {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: var(--gold);
+
+    background: rgba(212, 175, 55, 0.07);
+
+    border: 1px solid rgba(212, 175, 55, 0.16);
+    border-radius: 10px;
+}
+
+.footer-item div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    text-align: left;
+}
+
+.footer-item strong {
+    color: #dddddd;
+
+    font-size: 11px;
+}
+
+.footer-item span {
+    color: #777777;
+
+    font-size: 9px;
+}
+
+.footer-divider {
+    width: 1px;
+    height: 35px;
+
+    background: rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================
+   ANIMATIONS
+========================================= */
+
+@keyframes containerEntrance {
+
+    from {
+        opacity: 0;
+        transform: translateY(25px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes logoGlow {
+
+    from {
+        opacity: 0.25;
+        transform: scale(0.92);
+    }
+
+    to {
+        opacity: 0.6;
+        transform: scale(1.08);
+    }
+}
+
+@keyframes floatLeft {
+
+    from {
+        transform: translate(0, 0);
+    }
+
+    to {
+        transform: translate(80px, 60px);
+    }
+}
+
+@keyframes floatRight {
+
+    from {
+        transform: translate(0, 0);
+    }
+
+    to {
+        transform: translate(-70px, -60px);
+    }
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1050px) {
+
+    .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-card {
+        grid-column: 1 / -1;
+
+        width: min(520px, 100%);
+
+        justify-self: center;
+    }
+}
+
+@media (max-width: 720px) {
+
+    .role-wrapper {
+        padding: 18px;
+    }
+
+    .role-container {
+        padding: 28px 20px 24px;
+
+        border-radius: 22px;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-card {
+        grid-column: auto;
+
+        width: 100%;
+    }
+
+    .role-card {
+        min-height: auto;
+    }
+
+    .role-card > p {
+        min-height: auto;
+    }
+
+    .bottom {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .footer-divider {
+        width: 100%;
+        height: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .role-wrapper {
+        padding: 12px;
+    }
+
+    .role-container {
+        padding: 25px 15px 20px;
+    }
+
+    .role-header h1 {
+        font-size: 32px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+    }
+
+    .role-card {
+        padding: 21px;
+    }
+
+    .logo-wrapper {
+        width: 90px;
+        height: 90px;
+    }
+
+    .logo {
+        width: 78px;
+        height: 78px;
+    }
+}

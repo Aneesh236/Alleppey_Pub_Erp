@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Inventory Management | Alleppey Pub ERP</title>
+
+    <link rel="stylesheet"
+          href="../css/inventory.css">
+
+    <!-- Google Font -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+</head>
+
+<body>
+
+    <!-- =========================================
+         PAGE HEADER
+    ========================================== -->
+
+    <header class="inventory-header">
+
+        <div class="header-left">
+
+            <button class="back-btn"
+                    type="button"
+                    onclick="window.location.href='../html/admin-dashboard.html'">
+
+                <i class="fa-solid fa-arrow-left"></i>
+
+                Dashboard
+
+            </button>
+
+        </div>
+
+
+        <div class="header-center">
+
+            <span class="header-label">
+                Alleppey Pub ERP
+            </span>
+
+            <h1>INVENTORY MANAGEMENT</h1>
+
+            <p>
+                Monitor stock levels, inventory value and low-stock items.
+            </p>
+
+        </div>
+
+
+        <div class="header-right">
+
+            <button class="add-item-btn"
+                    id="openAddItemModal"
+                    type="button">
+
+                <i class="fa-solid fa-plus"></i>
+
+                Add Inventory Item
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================================
+         MAIN CONTENT
+    ========================================== -->
+
+    <main class="inventory-container">
+
+
+        <!-- =========================================
+             STATISTICS CARDS
+        ========================================== -->
+
+        <section class="inventory-stats">
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon total-icon">
+
+                    <i class="fa-solid fa-boxes-stacked"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Total Inventory Items</span>
+
+                    <strong id="totalInventoryItems">
+                        0
+                    </strong>
+
+                    <small>
+                        All tracked stock items
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon low-icon">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Low Stock</span>
+
+                    <strong id="lowStockCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Items below minimum stock
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon out-icon">
+
+                    <i class="fa-solid fa-circle-xmark"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Out of Stock</span>
+
+                    <strong id="outOfStockCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Items requiring restock
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon value-icon">
+
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Inventory Value</span>
+
+                    <strong>
+                        ₹<span id="inventoryValue">0.00</span>
+                    </strong>
+
+                    <small>
+                        Current stock valuation
+                    </small>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             TOOLBAR
+        ========================================== -->
+
+        <section class="inventory-toolbar">
+
+            <div class="search-box">
+
+                <i class="fa-solid fa-magnifying-glass"></i>
+
+                <input type="text"
+                       id="inventorySearch"
+                       placeholder="Search item, category or supplier...">
+
+            </div>
+
+
+            <div class="filter-group">
+
+                <div class="select-box">
+
+                    <i class="fa-solid fa-layer-group"></i>
+
+                    <select id="categoryFilter">
+
+                        <option value="All">
+                            All Categories
+                        </option>
+
+                        <option value="Beverages">
+                            Beverages
+                        </option>
+
+                        <option value="Alcohol">
+                            Alcohol
+                        </option>
+
+                        <option value="Food">
+                            Food
+                        </option>
+
+                        <option value="Ingredients">
+                            Ingredients
+                        </option>
+
+                        <option value="Snacks">
+                            Snacks
+                        </option>
+
+                        <option value="Supplies">
+                            Supplies
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="select-box">
+
+                    <i class="fa-solid fa-filter"></i>
+
+                    <select id="statusFilter">
+
+                        <option value="All">
+                            All Stock Status
+                        </option>
+
+                        <option value="In Stock">
+                            In Stock
+                        </option>
+
+                        <option value="Low Stock">
+                            Low Stock
+                        </option>
+
+                        <option value="Out of Stock">
+                            Out of Stock
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button class="reset-filter-btn"
+                        id="resetFilters"
+                        type="button">
+
+                    <i class="fa-solid fa-rotate-left"></i>
+
+                    Reset
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             INVENTORY TABLE CARD
+        ========================================== -->
+
+        <section class="inventory-table-card">
+
+            <div class="table-card-header">
+
+                <div>
+
+                    <span class="section-label">
+                        Stock Overview
+                    </span>
+
+                    <h2>Inventory Items</h2>
+
+                </div>
+
+
+                <div class="table-count">
+
+                    <i class="fa-solid fa-box-open"></i>
+
+                    <span id="displayedItemCount">
+                        0 Items
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table class="inventory-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Item</th>
+
+                            <th>Category</th>
+
+                            <th>Current Stock</th>
+
+                            <th>Unit</th>
+
+                            <th>Minimum Stock</th>
+
+                            <th>Cost / Unit</th>
+
+                            <th>Inventory Value</th>
+
+                            <th>Status</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="inventoryTableBody">
+
+                        <!-- Inventory rows generated by JavaScript -->
+
+                    </tbody>
+
+                </table>
+
+
+                <!-- Empty State -->
+
+                <div class="empty-state"
+                     id="emptyInventoryState">
+
+                    <i class="fa-solid fa-box-open"></i>
+
+                    <h3>No inventory items found</h3>
+
+                    <p>
+                        Add a new inventory item or change the filters.
+                    </p>
+
+                    <button type="button"
+                            id="emptyAddItemBtn">
+
+                        <i class="fa-solid fa-plus"></i>
+
+                        Add Inventory Item
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================================
+         ADD / EDIT INVENTORY MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="inventoryModal">
+
+        <div class="inventory-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-label">
+                        Inventory Item
+                    </span>
+
+                    <h2 id="modalTitle">
+                        Add New Item
+                    </h2>
+
+                </div>
+
+
+                <button class="close-modal-btn"
+                        id="closeInventoryModal"
+                        type="button"
+                        aria-label="Close modal">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <form id="inventoryForm">
+
+                <input type="hidden"
+                       id="inventoryItemId">
+
+
+                <div class="form-grid">
+
+
+                    <div class="form-group full-width">
+
+                        <label for="itemName">
+                            Item Name
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-box"></i>
+
+                            <input type="text"
+                                   id="itemName"
+                                   placeholder="Example: Lager Beer"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="itemCategory">
+                            Category
+                        </label>
+
+                        <div class="input-box select-input">
+
+                            <i class="fa-solid fa-layer-group"></i>
+
+                            <select id="itemCategory"
+                                    required>
+
+                                <option value="">
+                                    Select category
+                                </option>
+
+                                <option value="Beverages">
+                                    Beverages
+                                </option>
+
+                                <option value="Alcohol">
+                                    Alcohol
+                                </option>
+
+                                <option value="Food">
+                                    Food
+                                </option>
+
+                                <option value="Ingredients">
+                                    Ingredients
+                                </option>
+
+                                <option value="Snacks">
+                                    Snacks
+                                </option>
+
+                                <option value="Supplies">
+                                    Supplies
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="itemUnit">
+                            Unit
+                        </label>
+
+                        <div class="input-box select-input">
+
+                            <i class="fa-solid fa-scale-balanced"></i>
+
+                            <select id="itemUnit"
+                                    required>
+
+                                <option value="">
+                                    Select unit
+                                </option>
+
+                                <option value="Bottle">
+                                    Bottle
+                                </option>
+
+                                <option value="Can">
+                                    Can
+                                </option>
+
+                                <option value="Kilogram">
+                                    Kilogram
+                                </option>
+
+                                <option value="Litre">
+                                    Litre
+                                </option>
+
+                                <option value="Piece">
+                                    Piece
+                                </option>
+
+                                <option value="Packet">
+                                    Packet
+                                </option>
+
+                                <option value="Box">
+                                    Box
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="currentStock">
+                            Current Stock
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-boxes-stacked"></i>
+
+                            <input type="number"
+                                   id="currentStock"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="minimumStock">
+                            Minimum Stock
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-arrow-down-wide-short"></i>
+
+                            <input type="number"
+                                   id="minimumStock"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="costPerUnit">
+                            Cost Per Unit
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-indian-rupee-sign"></i>
+
+                            <input type="number"
+                                   id="costPerUnit"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="supplierName">
+                            Supplier
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-truck"></i>
+
+                            <input type="text"
+                                   id="supplierName"
+                                   placeholder="Supplier name">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group full-width">
+
+                        <label for="itemNotes">
+                            Notes
+                        </label>
+
+                        <textarea id="itemNotes"
+                                  rows="4"
+                                  placeholder="Optional item or restocking notes..."></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button class="cancel-btn"
+                            id="cancelInventoryModal"
+                            type="button">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button class="save-item-btn"
+                            type="submit">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+
+                        Save Inventory Item
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         STOCK ADJUSTMENT MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="stockModal">
+
+        <div class="stock-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-label">
+                        Stock Adjustment
+                    </span>
+
+                    <h2 id="stockModalTitle">
+                        Update Stock
+                    </h2>
+
+                </div>
+
+
+                <button class="close-modal-btn"
+                        id="closeStockModal"
+                        type="button">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="selected-stock-item">
+
+                <div class="selected-item-icon">
+
+                    <i class="fa-solid fa-box"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Selected Item</span>
+
+                    <strong id="selectedStockItemName">
+                        Inventory Item
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stock-action-options">
+
+                <label class="stock-action-card">
+
+                    <input type="radio"
+                           name="stockAction"
+                           value="add"
+                           checked>
+
+                    <span>
+
+                        <i class="fa-solid fa-plus"></i>
+
+                        <strong>Add Stock</strong>
+
+                        <small>
+                            Increase current quantity
+                        </small>
+
+                    </span>
+
+                </label>
+
+
+                <label class="stock-action-card">
+
+                    <input type="radio"
+                           name="stockAction"
+                           value="remove">
+
+                    <span>
+
+                        <i class="fa-solid fa-minus"></i>
+
+                        <strong>Remove Stock</strong>
+
+                        <small>
+                            Reduce current quantity
+                        </small>
+
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="stockQuantity">
+                    Quantity
+                </label>
+
+                <div class="input-box">
+
+                    <i class="fa-solid fa-cubes"></i>
+
+                    <input type="number"
+                           id="stockQuantity"
+                           min="0.01"
+                           step="0.01"
+                           placeholder="Enter quantity">
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button class="cancel-btn"
+                        id="cancelStockModal"
+                        type="button">
+
+                    Cancel
+
+                </button>
+
+
+                <button class="save-item-btn"
+                        id="confirmStockUpdate"
+                        type="button">
+
+                    <i class="fa-solid fa-check"></i>
+
+                    Update Stock
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         DELETE CONFIRMATION MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="deleteInventoryModal">
+
+        <div class="delete-modal">
+
+            <div class="delete-icon">
+
+                <i class="fa-solid fa-trash"></i>
+
+            </div>
+
+            <h2>Delete Inventory Item?</h2>
+
+            <p>
+                This item will be permanently removed from inventory.
+                This action cannot be undone.
+            </p>
+
+            <div class="delete-item-name"
+                 id="deleteItemName">
+
+                Inventory Item
+
+            </div>
+
+            <div class="modal-actions">
+
+                <button class="cancel-btn"
+                        id="cancelDeleteItem"
+                        type="button">
+
+                    Cancel
+
+                </button>
+
+
+                <button class="confirm-delete-btn"
+                        id="confirmDeleteItem"
+                        type="button">
+
+                    <i class="fa-solid fa-trash"></i>
+
+                    Delete Item
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         TOAST
+    ========================================== -->
+
+    <div id="toast"></div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script src="../js/inventory.js"></script>
+
+</body>
+
+</html>
