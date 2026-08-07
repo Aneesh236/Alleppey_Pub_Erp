@@ -1,0 +1,28 @@
+ALLEPPEY PUB ERP - LOCAL AI SETUP
+=================================
+
+1. Double-click RUN_AI.bat.
+2. Wait until the terminal says:
+   Uvicorn running on http://127.0.0.1:8000
+3. Keep the terminal window open.
+4. Open frontend/html/customer-home.html for the customer AI.
+5. Open frontend/html/ai-business-assistant.html for the admin AI.
+
+Test the server:
+http://127.0.0.1:8000/health
+
+Interactive API documentation:
+http://127.0.0.1:8000/docs
+
+Example customer questions:
+- Recommend a beer and food pairing.
+- What can I get under 350?
+- What are today's specials?
+
+Example administrator questions:
+- What is the total revenue?
+- Which item is selling the most?
+- What should I restock?
+- How many orders are pending?
+
+This local version does not require an OpenAI API key.

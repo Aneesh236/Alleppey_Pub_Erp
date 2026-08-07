@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel - Pub ERP</title>
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    .menu-form input, .menu-form button {
+      padding: 8px;
+      margin: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #fff;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+    }
+    #receipt {
+      display: none;
+      background: #fff;
+      padding: 20px;
+      margin-top: 30px;
+      border: 1px solid #aaa;
+    }
+    .btn {
+      margin-top: 10px;
+      padding: 10px 15px;
+      background: #333;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Admin Panel</h1>
+
+  <div class="menu-form">
+    <input type="text" id="itemName" placeholder="Item Name" />
+    <input type="number" id="itemPrice" placeholder="Price" />
+    <button onclick="addMenuItem()">Add Item</button>
+  </div>
+
+  <table id="menuTable">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Price ($)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Create Bill</h2>
+  <div class="menu-form">
+    <input type="text" id="orderItem" placeholder="Item Name" />
+    <input type="number" id="orderQty" placeholder="Quantity" />
+    <button onclick="addToReceipt()">Add to Bill</button>
+  </div>
+
+  <div id="receipt">
+    <h3>Bill Receipt</h3>
+    <div id="billItems"></div>
+    <p><strong>Total: $<span id="totalAmount">0.00</span></strong></p>
+    <button class="btn" onclick="printReceipt()">🖨️ Print Receipt</button>
+  </div>
+
+  <script>
+    const menu = [];
+
+    function addMenuItem() {
+      const name = document.getElementById('itemName').value;
+      const price = parseFloat(document.getElementById('itemPrice').value);
+      if (!name || isNaN(price)) return alert('Enter valid item and price');
+
+      menu.push({ name, price });
+      renderMenuTable();
+    }
+
+    function deleteMenuItem(index) {
+      menu.splice(index, 1);
+      renderMenuTable();
+    }
+
+    function renderMenuTable() {
+      const tbody = document.querySelector('#menuTable tbody');
+      tbody.innerHTML = '';
+      menu.forEach((item, index) => {
+        const row = `<tr>
+          <td>${item.name}</td>
+          <td>${item.price.toFixed(2)}</td>
+          <td><button onclick="deleteMenuItem(${index})">Delete</button></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+
+    const receiptItems = [];
+
+    function addToReceipt() {
+      const name = document.getElementById('orderItem').value;
+      const qty = parseInt(document.getElementById('orderQty').value);
+      if (!name || isNaN(qty) || qty <= 0) return alert('Enter valid item and quantity');
+
+      const menuItem = menu.find(item => item.name.toLowerCase() === name.toLowerCase());
+      if (!menuItem) return alert('Item not found in menu');
+
+      receiptItems.push({ name: menuItem.name, price: menuItem.price, qty });
+      renderReceipt();
+    }
+
+    function renderReceipt() {
+      document.getElementById('receipt').style.display = 'block';
+      const billItemsDiv = document.getElementById('billItems');
+      let total = 0;
+      billItemsDiv.innerHTML = '';
+
+      receiptItems.forEach(item => {
+        const lineTotal = item.price * item.qty;
+        total += lineTotal;
+        billItemsDiv.innerHTML += `<p>${item.qty} x ${item.name} - $${lineTotal.toFixed(2)}</p>`;
+      });
+
+      document.getElementById('totalAmount').textContent = total.toFixed(2);
+    }
+
+    function printReceipt() {
+      const printContents = document.getElementById('receipt').innerHTML;
+      const w = window.open();
+      w.document.write('<html><head><title>Receipt</title></head><body>' + printContents + '</body></html>');
+      w.document.close();
+      w.print();
+    }
+  </script>
+
+</body>
+</html>

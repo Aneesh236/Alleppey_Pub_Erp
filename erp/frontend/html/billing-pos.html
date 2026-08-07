@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Billing & POS | Alleppey Pub ERP</title>
+
+    <link rel="stylesheet"
+          href="../css/billing-pos.css">
+
+    <!-- Google Font -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+</head>
+
+<body>
+
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <header class="billing-header">
+
+        <div class="header-left">
+
+            <button type="button"
+                    class="back-btn"
+                    onclick="window.location.href='../html/admin-dashboard.html'">
+
+                <i class="fa-solid fa-arrow-left"></i>
+
+                Dashboard
+
+            </button>
+
+        </div>
+
+
+        <div class="header-center">
+
+            <span class="header-label">
+                Alleppey Pub ERP
+            </span>
+
+            <h1>BILLING & POS</h1>
+
+            <p>
+                Review orders, calculate totals and complete payments.
+            </p>
+
+        </div>
+
+
+        <div class="header-right">
+
+            <button type="button"
+                    class="new-bill-btn"
+                    id="newBillBtn">
+
+                <i class="fa-solid fa-plus"></i>
+
+                New Bill
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================================
+         MAIN CONTENT
+    ========================================== -->
+
+    <main class="billing-container">
+
+
+        <!-- =========================================
+             BILLING STATISTICS
+        ========================================== -->
+
+        <section class="billing-stats">
+
+            <article class="stat-card">
+
+                <div class="stat-icon today-icon">
+
+                    <i class="fa-solid fa-receipt"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Today's Bills</span>
+
+                    <strong id="todayBillsCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Bills created today
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon revenue-icon">
+
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Today's Revenue</span>
+
+                    <strong>
+                        ₹<span id="todayRevenue">0.00</span>
+                    </strong>
+
+                    <small>
+                        Total paid value
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon pending-icon">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Pending Payments</span>
+
+                    <strong id="pendingPaymentCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Bills awaiting payment
+                    </small>
+
+                </div>
+
+            </article>
+
+
+            <article class="stat-card">
+
+                <div class="stat-icon completed-icon">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                </div>
+
+                <div class="stat-content">
+
+                    <span>Completed Payments</span>
+
+                    <strong id="completedPaymentCount">
+                        0
+                    </strong>
+
+                    <small>
+                        Successfully paid bills
+                    </small>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             POS WORKSPACE
+        ========================================== -->
+
+        <section class="pos-layout">
+
+
+            <!-- =====================================
+                 LEFT SIDE - ORDER LIST
+            ====================================== -->
+
+            <aside class="order-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Order Queue
+                        </span>
+
+                        <h2>Select an Order</h2>
+
+                    </div>
+
+                    <span class="order-count"
+                          id="availableOrderCount">
+
+                        0 Orders
+
+                    </span>
+
+                </div>
+
+
+                <div class="order-search-box">
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input type="text"
+                           id="orderSearch"
+                           placeholder="Search order ID, customer or table...">
+
+                </div>
+
+
+                <div class="order-filter-row">
+
+                    <button type="button"
+                            class="order-filter-btn active"
+                            data-status="All">
+
+                        All
+
+                    </button>
+
+                    <button type="button"
+                            class="order-filter-btn"
+                            data-status="Ready">
+
+                        Ready
+
+                    </button>
+
+                    <button type="button"
+                            class="order-filter-btn"
+                            data-status="Pending">
+
+                        Pending
+
+                    </button>
+
+                    <button type="button"
+                            class="order-filter-btn"
+                            data-status="Paid">
+
+                        Paid
+
+                    </button>
+
+                </div>
+
+
+                <div class="order-list"
+                     id="orderList">
+
+                    <!-- Order cards generated by JavaScript -->
+
+                </div>
+
+
+                <div class="order-empty-state"
+                     id="orderEmptyState">
+
+                    <i class="fa-solid fa-receipt"></i>
+
+                    <h3>No orders found</h3>
+
+                    <p>
+                        New customer orders will appear here.
+                    </p>
+
+                </div>
+
+            </aside>
+
+
+
+            <!-- =====================================
+                 CENTER - BILL DETAILS
+            ====================================== -->
+
+            <section class="bill-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Current Bill
+                        </span>
+
+                        <h2 id="selectedOrderTitle">
+                            No Order Selected
+                        </h2>
+
+                    </div>
+
+
+                    <span class="bill-status pending"
+                          id="billStatus">
+
+                        Pending
+
+                    </span>
+
+                </div>
+
+
+                <!-- Customer and order information -->
+
+                <div class="order-info-grid">
+
+                    <div class="info-card">
+
+                        <span>Customer</span>
+
+                        <strong id="billCustomerName">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span>Table</span>
+
+                        <strong id="billTableNumber">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span>Order Time</span>
+
+                        <strong id="billOrderTime">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-card">
+
+                        <span>Order Type</span>
+
+                        <strong id="billOrderType">
+                            —
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Items table -->
+
+                <div class="bill-items-card">
+
+                    <div class="bill-items-header">
+
+                        <h3>Ordered Items</h3>
+
+                        <span id="billItemCount">
+                            0 Items
+                        </span>
+
+                    </div>
+
+
+                    <div class="bill-table-wrapper">
+
+                        <table class="bill-items-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>Item</th>
+
+                                    <th>Price</th>
+
+                                    <th>Quantity</th>
+
+                                    <th>Total</th>
+
+                                    <th>Action</th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="billItemsBody">
+
+                                <!-- Bill rows generated by JavaScript -->
+
+                            </tbody>
+
+                        </table>
+
+
+                        <div class="bill-empty-state"
+                             id="billEmptyState">
+
+                            <i class="fa-solid fa-cart-shopping"></i>
+
+                            <h3>Select an order</h3>
+
+                            <p>
+                                Choose an order from the left panel to create its bill.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Add custom item -->
+
+                <div class="custom-item-row">
+
+                    <button type="button"
+                            class="add-custom-item-btn"
+                            id="openCustomItemModal">
+
+                        <i class="fa-solid fa-plus"></i>
+
+                        Add Custom Item
+
+                    </button>
+
+
+                    <button type="button"
+                            class="clear-bill-btn"
+                            id="clearBillBtn">
+
+                        <i class="fa-solid fa-trash"></i>
+
+                        Clear Bill
+
+                    </button>
+
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================
+                 RIGHT SIDE - PAYMENT SUMMARY
+            ====================================== -->
+
+            <aside class="payment-panel">
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Payment Summary
+                        </span>
+
+                        <h2>Checkout</h2>
+
+                    </div>
+
+                    <i class="fa-solid fa-wallet payment-header-icon"></i>
+
+                </div>
+
+
+                <!-- Bill calculations -->
+
+                <div class="calculation-list">
+
+                    <div class="calculation-row">
+
+                        <span>Subtotal</span>
+
+                        <strong>
+                            ₹<span id="billSubtotal">0.00</span>
+                        </strong>
+
+                    </div>
+
+
+                    <div class="calculation-row input-row">
+
+                        <label for="discountInput">
+                            Discount
+                        </label>
+
+                        <div class="summary-input">
+
+                            <input type="number"
+                                   id="discountInput"
+                                   min="0"
+                                   step="0.01"
+                                   value="0">
+
+                            <select id="discountType">
+
+                                <option value="percentage">
+                                    %
+                                </option>
+
+                                <option value="fixed">
+                                    ₹
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="calculation-row">
+
+                        <span>Discount Amount</span>
+
+                        <strong class="discount-value">
+                            - ₹<span id="discountAmount">0.00</span>
+                        </strong>
+
+                    </div>
+
+
+                    <div class="calculation-row input-row">
+
+                        <label for="gstInput">
+                            GST
+                        </label>
+
+                        <div class="summary-input simple-input">
+
+                            <input type="number"
+                                   id="gstInput"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   value="5">
+
+                            <span>%</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="calculation-row">
+
+                        <span>GST Amount</span>
+
+                        <strong>
+                            ₹<span id="gstAmount">0.00</span>
+                        </strong>
+
+                    </div>
+
+
+                    <div class="calculation-row input-row">
+
+                        <label for="serviceChargeInput">
+                            Service Charge
+                        </label>
+
+                        <div class="summary-input simple-input">
+
+                            <input type="number"
+                                   id="serviceChargeInput"
+                                   min="0"
+                                   max="100"
+                                   step="0.01"
+                                   value="0">
+
+                            <span>%</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="calculation-row">
+
+                        <span>Service Charge Amount</span>
+
+                        <strong>
+                            ₹<span id="serviceChargeAmount">0.00</span>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Grand total -->
+
+                <div class="grand-total-card">
+
+                    <span>Grand Total</span>
+
+                    <strong>
+                        ₹<span id="grandTotal">0.00</span>
+                    </strong>
+
+                    <small>
+                        Inclusive of applicable taxes and charges
+                    </small>
+
+                </div>
+
+
+
+                <!-- Payment method -->
+
+                <div class="payment-method-section">
+
+                    <label>
+                        Payment Method
+                    </label>
+
+
+                    <div class="payment-method-grid">
+
+
+                        <label class="payment-method-card">
+
+                            <input type="radio"
+                                   name="paymentMethod"
+                                   value="Cash"
+                                   checked>
+
+                            <span>
+
+                                <i class="fa-solid fa-money-bill-wave"></i>
+
+                                <strong>Cash</strong>
+
+                            </span>
+
+                        </label>
+
+
+                        <label class="payment-method-card">
+
+                            <input type="radio"
+                                   name="paymentMethod"
+                                   value="Card">
+
+                            <span>
+
+                                <i class="fa-solid fa-credit-card"></i>
+
+                                <strong>Card</strong>
+
+                            </span>
+
+                        </label>
+
+
+                        <label class="payment-method-card">
+
+                            <input type="radio"
+                                   name="paymentMethod"
+                                   value="UPI">
+
+                            <span>
+
+                                <i class="fa-solid fa-mobile-screen-button"></i>
+
+                                <strong>UPI</strong>
+
+                            </span>
+
+                        </label>
+
+
+                        <label class="payment-method-card">
+
+                            <input type="radio"
+                                   name="paymentMethod"
+                                   value="Split">
+
+                            <span>
+
+                                <i class="fa-solid fa-code-branch"></i>
+
+                                <strong>Split</strong>
+
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Payment status -->
+
+                <div class="payment-status-section">
+
+                    <label for="paymentStatusSelect">
+                        Payment Status
+                    </label>
+
+                    <div class="select-wrapper">
+
+                        <i class="fa-solid fa-circle-info"></i>
+
+                        <select id="paymentStatusSelect">
+
+                            <option value="Pending">
+                                Pending
+                            </option>
+
+                            <option value="Paid">
+                                Paid
+                            </option>
+
+                            <option value="Partially Paid">
+                                Partially Paid
+                            </option>
+
+                            <option value="Refunded">
+                                Refunded
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- Notes -->
+
+                <div class="payment-notes-section">
+
+                    <label for="paymentNotes">
+                        Payment Notes
+                    </label>
+
+                    <textarea id="paymentNotes"
+                              rows="3"
+                              placeholder="Optional payment notes..."></textarea>
+
+                </div>
+
+
+
+                <!-- Actions -->
+
+                <div class="payment-actions">
+
+                    <button type="button"
+                            class="save-bill-btn"
+                            id="saveBillBtn">
+
+                        <i class="fa-solid fa-floppy-disk"></i>
+
+                        Save Bill
+
+                    </button>
+
+
+                    <button type="button"
+                            class="mark-paid-btn"
+                            id="markPaidBtn">
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                        Mark as Paid
+
+                    </button>
+
+
+                    <button type="button"
+                            class="print-receipt-btn"
+                            id="printReceiptBtn">
+
+                        <i class="fa-solid fa-print"></i>
+
+                        Print Receipt
+
+                    </button>
+
+                </div>
+
+            </aside>
+
+        </section>
+
+
+
+        <!-- =========================================
+             RECENT BILLING HISTORY
+        ========================================== -->
+
+        <section class="billing-history-card">
+
+            <div class="history-header">
+
+                <div>
+
+                    <span class="section-label">
+                        Billing History
+                    </span>
+
+                    <h2>Recent Bills</h2>
+
+                </div>
+
+
+                <div class="history-actions">
+
+                    <div class="history-search-box">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input type="text"
+                               id="billHistorySearch"
+                               placeholder="Search bills...">
+
+                    </div>
+
+
+                    <button type="button"
+                            class="export-btn"
+                            id="exportBillsBtn">
+
+                        <i class="fa-solid fa-file-export"></i>
+
+                        Export
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="history-table-wrapper">
+
+                <table class="history-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Bill ID</th>
+
+                            <th>Order ID</th>
+
+                            <th>Customer</th>
+
+                            <th>Table</th>
+
+                            <th>Total</th>
+
+                            <th>Payment Method</th>
+
+                            <th>Status</th>
+
+                            <th>Date & Time</th>
+
+                            <th>Actions</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="billingHistoryBody">
+
+                        <!-- Billing history generated by JavaScript -->
+
+                    </tbody>
+
+                </table>
+
+
+                <div class="history-empty-state"
+                     id="historyEmptyState">
+
+                    <i class="fa-solid fa-file-invoice"></i>
+
+                    <h3>No billing records found</h3>
+
+                    <p>
+                        Completed and saved bills will appear here.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================================
+         CUSTOM ITEM MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="customItemModal">
+
+        <div class="custom-item-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-label">
+                        Custom Billing Item
+                    </span>
+
+                    <h2>Add Custom Item</h2>
+
+                </div>
+
+
+                <button type="button"
+                        class="close-modal-btn"
+                        id="closeCustomItemModal"
+                        aria-label="Close modal">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <form id="customItemForm">
+
+                <div class="form-group">
+
+                    <label for="customItemName">
+                        Item Name
+                    </label>
+
+                    <div class="input-box">
+
+                        <i class="fa-solid fa-box"></i>
+
+                        <input type="text"
+                               id="customItemName"
+                               placeholder="Example: Special Platter"
+                               required>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="customItemPrice">
+                            Price
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-indian-rupee-sign"></i>
+
+                            <input type="number"
+                                   id="customItemPrice"
+                                   min="0"
+                                   step="0.01"
+                                   placeholder="0.00"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="customItemQuantity">
+                            Quantity
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-cubes"></i>
+
+                            <input type="number"
+                                   id="customItemQuantity"
+                                   min="1"
+                                   step="1"
+                                   value="1"
+                                   required>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="customItemNotes">
+                        Notes
+                    </label>
+
+                    <textarea id="customItemNotes"
+                              rows="3"
+                              placeholder="Optional notes..."></textarea>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button type="button"
+                            class="cancel-btn"
+                            id="cancelCustomItemModal">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="save-custom-item-btn">
+
+                        <i class="fa-solid fa-plus"></i>
+
+                        Add to Bill
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         NEW BILL MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="newBillModal">
+
+        <div class="new-bill-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-label">
+                        Manual Billing
+                    </span>
+
+                    <h2>Create New Bill</h2>
+
+                </div>
+
+
+                <button type="button"
+                        class="close-modal-btn"
+                        id="closeNewBillModal"
+                        aria-label="Close modal">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <form id="newBillForm">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="newBillCustomer">
+                            Customer Name
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-user"></i>
+
+                            <input type="text"
+                                   id="newBillCustomer"
+                                   placeholder="Walk-in Customer">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="newBillTable">
+                            Table Number
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-chair"></i>
+
+                            <input type="text"
+                                   id="newBillTable"
+                                   placeholder="Example: T-04">
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="newBillOrderType">
+                            Order Type
+                        </label>
+
+                        <div class="input-box select-input">
+
+                            <i class="fa-solid fa-bag-shopping"></i>
+
+                            <select id="newBillOrderType">
+
+                                <option value="Dine In">
+                                    Dine In
+                                </option>
+
+                                <option value="Takeaway">
+                                    Takeaway
+                                </option>
+
+                                <option value="Delivery">
+                                    Delivery
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="newBillOrderId">
+                            Order ID
+                        </label>
+
+                        <div class="input-box">
+
+                            <i class="fa-solid fa-hashtag"></i>
+
+                            <input type="text"
+                                   id="newBillOrderId"
+                                   placeholder="Generated automatically"
+                                   readonly>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button type="button"
+                            class="cancel-btn"
+                            id="cancelNewBillModal">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="save-custom-item-btn">
+
+                        <i class="fa-solid fa-receipt"></i>
+
+                        Create Bill
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         RECEIPT PREVIEW MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="receiptModal">
+
+        <div class="receipt-modal">
+
+            <div class="receipt-preview"
+                 id="receiptPreview">
+
+                <div class="receipt-brand">
+
+                    <img src="../img/logo.jpeg"
+                         alt="Alleppey Pub logo">
+
+                    <h2>ALLEPPEY PUB & BAR</h2>
+
+                    <p>
+                        Billing Receipt
+                    </p>
+
+                </div>
+
+
+                <div class="receipt-details">
+
+                    <div>
+
+                        <span>Bill ID</span>
+
+                        <strong id="receiptBillId">—</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Order ID</span>
+
+                        <strong id="receiptOrderId">—</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Customer</span>
+
+                        <strong id="receiptCustomer">—</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Table</span>
+
+                        <strong id="receiptTable">—</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Date</span>
+
+                        <strong id="receiptDate">—</strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Payment</span>
+
+                        <strong id="receiptPaymentMethod">—</strong>
+
+                    </div>
+
+                </div>
+
+
+                <table class="receipt-items-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Item</th>
+
+                            <th>Qty</th>
+
+                            <th>Total</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="receiptItemsBody">
+
+                    </tbody>
+
+                </table>
+
+
+                <div class="receipt-summary">
+
+                    <div>
+
+                        <span>Subtotal</span>
+
+                        <strong>
+                            ₹<span id="receiptSubtotal">0.00</span>
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Discount</span>
+
+                        <strong>
+                            - ₹<span id="receiptDiscount">0.00</span>
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>GST</span>
+
+                        <strong>
+                            ₹<span id="receiptGst">0.00</span>
+                        </strong>
+
+                    </div>
+
+                    <div>
+
+                        <span>Service Charge</span>
+
+                        <strong>
+                            ₹<span id="receiptServiceCharge">0.00</span>
+                        </strong>
+
+                    </div>
+
+                    <div class="receipt-grand-total">
+
+                        <span>Grand Total</span>
+
+                        <strong>
+                            ₹<span id="receiptGrandTotal">0.00</span>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="receipt-footer">
+
+                    <p>
+                        Thank you for visiting Alleppey Pub & Bar.
+                    </p>
+
+                    <small>
+                        Good Drinks • Great Food • Best Memories
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="receipt-actions">
+
+                <button type="button"
+                        class="cancel-btn"
+                        id="closeReceiptModal">
+
+                    Close
+
+                </button>
+
+
+                <button type="button"
+                        class="print-receipt-confirm-btn"
+                        id="confirmPrintReceipt">
+
+                    <i class="fa-solid fa-print"></i>
+
+                    Print Receipt
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         DELETE BILL CONFIRMATION
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="deleteBillModal">
+
+        <div class="delete-bill-modal">
+
+            <div class="delete-icon">
+
+                <i class="fa-solid fa-trash"></i>
+
+            </div>
+
+            <h2>Delete Billing Record?</h2>
+
+            <p>
+                This bill will be permanently removed from billing history.
+            </p>
+
+            <div class="delete-bill-name"
+                 id="deleteBillName">
+
+                Bill Record
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button type="button"
+                        class="cancel-btn"
+                        id="cancelDeleteBill">
+
+                    Cancel
+
+                </button>
+
+
+                <button type="button"
+                        class="confirm-delete-btn"
+                        id="confirmDeleteBill">
+
+                    <i class="fa-solid fa-trash"></i>
+
+                    Delete Bill
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         TOAST
+    ========================================== -->
+
+    <div id="toast"></div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script src="../js/billing-pos.js"></script>
+
+</body>
+
+</html>
