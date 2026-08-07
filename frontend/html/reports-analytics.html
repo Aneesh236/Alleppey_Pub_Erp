@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Reports & Analytics | Alleppey Pub ERP</title>
+
+    <link rel="stylesheet"
+          href="../css/reports-analytics.css">
+
+    <!-- Google Font -->
+    <link rel="preconnect"
+          href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <header class="reports-header">
+
+        <div class="header-left">
+
+            <button type="button"
+                    class="back-btn"
+                    onclick="window.location.href='../html/admin-dashboard.html'">
+
+                <i class="fa-solid fa-arrow-left"></i>
+
+                Dashboard
+
+            </button>
+
+        </div>
+
+
+        <div class="header-center">
+
+            <span class="header-label">
+                Alleppey Pub ERP
+            </span>
+
+            <h1>REPORTS & ANALYTICS</h1>
+
+            <p>
+                Monitor sales performance, payments, orders and inventory.
+            </p>
+
+        </div>
+
+
+        <div class="header-right">
+
+            <button type="button"
+                    class="refresh-btn"
+                    id="refreshReportsBtn">
+
+                <i class="fa-solid fa-rotate"></i>
+
+                Refresh
+
+            </button>
+
+
+            <button type="button"
+                    class="export-report-btn"
+                    id="exportReportBtn">
+
+                <i class="fa-solid fa-file-export"></i>
+
+                Export Report
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =========================================
+         MAIN CONTENT
+    ========================================== -->
+
+    <main class="reports-container">
+
+
+        <!-- =========================================
+             REPORT FILTERS
+        ========================================== -->
+
+        <section class="report-toolbar">
+
+            <div class="toolbar-title">
+
+                <span class="section-label">
+                    Report Controls
+                </span>
+
+                <h2>Analytics Overview</h2>
+
+            </div>
+
+
+            <div class="date-filter-group">
+
+                <button type="button"
+                        class="period-btn active"
+                        data-period="today">
+
+                    Today
+
+                </button>
+
+
+                <button type="button"
+                        class="period-btn"
+                        data-period="week">
+
+                    This Week
+
+                </button>
+
+
+                <button type="button"
+                        class="period-btn"
+                        data-period="month">
+
+                    This Month
+
+                </button>
+
+
+                <button type="button"
+                        class="period-btn"
+                        data-period="year">
+
+                    This Year
+
+                </button>
+
+
+                <button type="button"
+                        class="period-btn"
+                        data-period="all">
+
+                    All Time
+
+                </button>
+
+            </div>
+
+
+            <div class="custom-date-group">
+
+                <div class="date-input-box">
+
+                    <label for="startDate">
+                        From
+                    </label>
+
+                    <input type="date"
+                           id="startDate">
+
+                </div>
+
+
+                <div class="date-input-box">
+
+                    <label for="endDate">
+                        To
+                    </label>
+
+                    <input type="date"
+                           id="endDate">
+
+                </div>
+
+
+                <button type="button"
+                        class="apply-date-btn"
+                        id="applyCustomDateBtn">
+
+                    <i class="fa-solid fa-filter"></i>
+
+                    Apply
+
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             SUMMARY STATISTICS
+        ========================================== -->
+
+        <section class="report-stats">
+
+
+            <article class="stat-card">
+
+                <div class="stat-top">
+
+                    <div class="stat-icon revenue-icon">
+
+                        <i class="fa-solid fa-indian-rupee-sign"></i>
+
+                    </div>
+
+                    <span class="stat-change positive"
+                          id="revenueChange">
+
+                        +0%
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-content">
+
+                    <span>Total Revenue</span>
+
+                    <strong>
+                        ₹<span id="totalRevenue">0.00</span>
+                    </strong>
+
+                    <small>
+                        Revenue from paid bills
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="stat-card">
+
+                <div class="stat-top">
+
+                    <div class="stat-icon bills-icon">
+
+                        <i class="fa-solid fa-file-invoice-dollar"></i>
+
+                    </div>
+
+                    <span class="stat-change positive"
+                          id="billsChange">
+
+                        +0%
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-content">
+
+                    <span>Total Bills</span>
+
+                    <strong id="totalBills">
+                        0
+                    </strong>
+
+                    <small>
+                        Bills generated during period
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="stat-card">
+
+                <div class="stat-top">
+
+                    <div class="stat-icon orders-icon">
+
+                        <i class="fa-solid fa-bag-shopping"></i>
+
+                    </div>
+
+                    <span class="stat-change positive"
+                          id="ordersChange">
+
+                        +0%
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-content">
+
+                    <span>Total Orders</span>
+
+                    <strong id="totalOrders">
+                        0
+                    </strong>
+
+                    <small>
+                        Customer and manual orders
+                    </small>
+
+                </div>
+
+            </article>
+
+
+
+            <article class="stat-card">
+
+                <div class="stat-top">
+
+                    <div class="stat-icon average-icon">
+
+                        <i class="fa-solid fa-chart-line"></i>
+
+                    </div>
+
+                    <span class="stat-change positive"
+                          id="averageChange">
+
+                        +0%
+
+                    </span>
+
+                </div>
+
+
+                <div class="stat-content">
+
+                    <span>Average Bill Value</span>
+
+                    <strong>
+                        ₹<span id="averageBillValue">0.00</span>
+                    </strong>
+
+                    <small>
+                        Average revenue per bill
+                    </small>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             SECONDARY METRICS
+        ========================================== -->
+
+        <section class="secondary-stats">
+
+
+            <article class="small-stat-card">
+
+                <div class="small-stat-icon paid-icon">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Paid Bills</span>
+
+                    <strong id="paidBillsCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </article>
+
+
+            <article class="small-stat-card">
+
+                <div class="small-stat-icon pending-icon">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Pending Bills</span>
+
+                    <strong id="pendingBillsCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </article>
+
+
+            <article class="small-stat-card">
+
+                <div class="small-stat-icon items-icon">
+
+                    <i class="fa-solid fa-utensils"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Items Sold</span>
+
+                    <strong id="itemsSoldCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </article>
+
+
+            <article class="small-stat-card">
+
+                <div class="small-stat-icon stock-icon">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                </div>
+
+                <div>
+
+                    <span>Stock Alerts</span>
+
+                    <strong id="stockAlertCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             CHART GRID - ROW 1
+        ========================================== -->
+
+        <section class="chart-grid chart-grid-primary">
+
+
+            <!-- Revenue chart -->
+
+            <article class="chart-card revenue-chart-card">
+
+                <div class="chart-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Sales Performance
+                        </span>
+
+                        <h2>Revenue Overview</h2>
+
+                    </div>
+
+
+                    <div class="chart-value">
+
+                        <span>Selected Revenue</span>
+
+                        <strong>
+                            ₹<span id="chartRevenueTotal">0.00</span>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chart-wrapper large-chart">
+
+                    <canvas id="revenueChart"></canvas>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- Payment methods -->
+
+            <article class="chart-card payment-chart-card">
+
+                <div class="chart-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Payment Analysis
+                        </span>
+
+                        <h2>Payment Methods</h2>
+
+                    </div>
+
+
+                    <i class="fa-solid fa-wallet chart-header-icon"></i>
+
+                </div>
+
+
+                <div class="chart-wrapper doughnut-chart">
+
+                    <canvas id="paymentMethodChart"></canvas>
+
+                </div>
+
+
+                <div class="payment-legend"
+                     id="paymentMethodLegend">
+
+                    <!-- Generated by JavaScript -->
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             CHART GRID - ROW 2
+        ========================================== -->
+
+        <section class="chart-grid chart-grid-secondary">
+
+
+            <!-- Order status -->
+
+            <article class="chart-card">
+
+                <div class="chart-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Order Workflow
+                        </span>
+
+                        <h2>Order Status</h2>
+
+                    </div>
+
+
+                    <i class="fa-solid fa-list-check chart-header-icon"></i>
+
+                </div>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="orderStatusChart"></canvas>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- Sales by order type -->
+
+            <article class="chart-card">
+
+                <div class="chart-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Order Channels
+                        </span>
+
+                        <h2>Sales by Order Type</h2>
+
+                    </div>
+
+
+                    <i class="fa-solid fa-store chart-header-icon"></i>
+
+                </div>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="orderTypeChart"></canvas>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- Category sales -->
+
+            <article class="chart-card">
+
+                <div class="chart-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Product Performance
+                        </span>
+
+                        <h2>Top Selling Items</h2>
+
+                    </div>
+
+
+                    <i class="fa-solid fa-trophy chart-header-icon"></i>
+
+                </div>
+
+
+                <div class="chart-wrapper">
+
+                    <canvas id="topItemsChart"></canvas>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             PERFORMANCE TABLES
+        ========================================== -->
+
+        <section class="analytics-table-grid">
+
+
+            <!-- Popular items -->
+
+            <article class="analytics-table-card">
+
+                <div class="table-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Menu Analytics
+                        </span>
+
+                        <h2>Popular Items</h2>
+
+                    </div>
+
+
+                    <span class="record-count"
+                          id="popularItemsCount">
+
+                        0 Items
+
+                    </span>
+
+                </div>
+
+
+                <div class="analytics-table-wrapper">
+
+                    <table class="analytics-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Rank</th>
+
+                                <th>Item</th>
+
+                                <th>Quantity Sold</th>
+
+                                <th>Revenue</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="popularItemsBody">
+
+                            <!-- Generated by JavaScript -->
+
+                        </tbody>
+
+                    </table>
+
+
+                    <div class="table-empty-state"
+                         id="popularItemsEmpty">
+
+                        <i class="fa-solid fa-burger"></i>
+
+                        <h3>No item sales found</h3>
+
+                        <p>
+                            Item performance will appear after bills are created.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+
+
+            <!-- Inventory alerts -->
+
+            <article class="analytics-table-card">
+
+                <div class="table-card-header">
+
+                    <div>
+
+                        <span class="section-label">
+                            Inventory Monitoring
+                        </span>
+
+                        <h2>Stock Alerts</h2>
+
+                    </div>
+
+
+                    <button type="button"
+                            class="inventory-link-btn"
+                            onclick="window.location.href='../html/inventory-management.html'">
+
+                        View Inventory
+
+                        <i class="fa-solid fa-arrow-right"></i>
+
+                    </button>
+
+                </div>
+
+
+                <div class="analytics-table-wrapper">
+
+                    <table class="analytics-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Item</th>
+
+                                <th>Current</th>
+
+                                <th>Minimum</th>
+
+                                <th>Status</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="stockAlertsBody">
+
+                            <!-- Generated by JavaScript -->
+
+                        </tbody>
+
+                    </table>
+
+
+                    <div class="table-empty-state"
+                         id="stockAlertsEmpty">
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                        <h3>Stock levels are healthy</h3>
+
+                        <p>
+                            No low-stock or out-of-stock items were found.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =========================================
+             RECENT TRANSACTIONS
+        ========================================== -->
+
+        <section class="transactions-card">
+
+            <div class="transactions-header">
+
+                <div>
+
+                    <span class="section-label">
+                        Financial Activity
+                    </span>
+
+                    <h2>Recent Transactions</h2>
+
+                </div>
+
+
+                <div class="transaction-actions">
+
+                    <div class="transaction-search-box">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input type="text"
+                               id="transactionSearch"
+                               placeholder="Search bill, customer or payment...">
+
+                    </div>
+
+
+                    <select id="transactionStatusFilter">
+
+                        <option value="All">
+                            All Statuses
+                        </option>
+
+                        <option value="Paid">
+                            Paid
+                        </option>
+
+                        <option value="Pending">
+                            Pending
+                        </option>
+
+                        <option value="Partially Paid">
+                            Partially Paid
+                        </option>
+
+                        <option value="Refunded">
+                            Refunded
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="transactions-table-wrapper">
+
+                <table class="transactions-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Bill ID</th>
+
+                            <th>Order ID</th>
+
+                            <th>Customer</th>
+
+                            <th>Order Type</th>
+
+                            <th>Payment</th>
+
+                            <th>Status</th>
+
+                            <th>Items</th>
+
+                            <th>Total</th>
+
+                            <th>Date & Time</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="transactionsBody">
+
+                        <!-- Generated by JavaScript -->
+
+                    </tbody>
+
+                </table>
+
+
+                <div class="transactions-empty-state"
+                     id="transactionsEmptyState">
+
+                    <i class="fa-solid fa-file-invoice"></i>
+
+                    <h3>No transactions found</h3>
+
+                    <p>
+                        Saved billing transactions will appear here.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================================
+             BUSINESS INSIGHTS
+        ========================================== -->
+
+        <section class="insights-section">
+
+            <div class="insights-heading">
+
+                <div>
+
+                    <span class="section-label">
+                        Automated Analysis
+                    </span>
+
+                    <h2>Business Insights</h2>
+
+                </div>
+
+
+                <span class="analysis-badge">
+
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+
+                    Smart Summary
+
+                </span>
+
+            </div>
+
+
+            <div class="insights-grid">
+
+
+                <article class="insight-card">
+
+                    <div class="insight-icon">
+
+                        <i class="fa-solid fa-chart-line"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>Revenue Insight</span>
+
+                        <p id="revenueInsight">
+                            No revenue information is currently available.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <article class="insight-card">
+
+                    <div class="insight-icon">
+
+                        <i class="fa-solid fa-trophy"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>Top Product</span>
+
+                        <p id="productInsight">
+                            No product sales information is currently available.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <article class="insight-card">
+
+                    <div class="insight-icon">
+
+                        <i class="fa-solid fa-wallet"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>Payment Insight</span>
+
+                        <p id="paymentInsight">
+                            No payment information is currently available.
+                        </p>
+
+                    </div>
+
+                </article>
+
+
+
+                <article class="insight-card warning-insight">
+
+                    <div class="insight-icon">
+
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    </div>
+
+                    <div>
+
+                        <span>Inventory Insight</span>
+
+                        <p id="inventoryInsight">
+                            No inventory information is currently available.
+                        </p>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+
+    <!-- =========================================
+         EXPORT REPORT MODAL
+    ========================================== -->
+
+    <div class="modal-overlay"
+         id="exportReportModal">
+
+        <div class="export-modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="modal-label">
+                        Reports & Analytics
+                    </span>
+
+                    <h2>Export Report</h2>
+
+                </div>
+
+
+                <button type="button"
+                        class="close-modal-btn"
+                        id="closeExportModal"
+                        aria-label="Close export modal">
+
+                    <i class="fa-solid fa-xmark"></i>
+
+                </button>
+
+            </div>
+
+
+            <div class="export-content">
+
+                <p>
+                    Select the report format you want to export.
+                </p>
+
+
+                <div class="export-option-grid">
+
+
+                    <label class="export-option">
+
+                        <input type="radio"
+                               name="exportFormat"
+                               value="csv"
+                               checked>
+
+                        <span>
+
+                            <i class="fa-solid fa-file-csv"></i>
+
+                            <strong>CSV Report</strong>
+
+                            <small>
+                                Export transaction and sales data
+                            </small>
+
+                        </span>
+
+                    </label>
+
+
+                    <label class="export-option">
+
+                        <input type="radio"
+                               name="exportFormat"
+                               value="print">
+
+                        <span>
+
+                            <i class="fa-solid fa-print"></i>
+
+                            <strong>Print Report</strong>
+
+                            <small>
+                                Print the analytics dashboard
+                            </small>
+
+                        </span>
+
+                    </label>
+
+                </div>
+
+
+                <div class="export-summary">
+
+                    <div>
+
+                        <span>Selected Period</span>
+
+                        <strong id="exportPeriodText">
+                            Today
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>Transactions</span>
+
+                        <strong id="exportTransactionCount">
+                            0
+                        </strong>
+
+                    </div>
+
+
+                    <div>
+
+                        <span>Total Revenue</span>
+
+                        <strong>
+                            ₹<span id="exportRevenueTotal">0.00</span>
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button type="button"
+                            class="cancel-btn"
+                            id="cancelExportModal">
+
+                        Cancel
+
+                    </button>
+
+
+                    <button type="button"
+                            class="confirm-export-btn"
+                            id="confirmExportBtn">
+
+                        <i class="fa-solid fa-download"></i>
+
+                        Export Report
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================================
+         TOAST
+    ========================================== -->
+
+    <div id="toast"></div>
+
+
+
+    <!-- =========================================
+         JAVASCRIPT
+    ========================================== -->
+
+    <script src="../js/reports-analytics.js"></script>
+
+</body>
+
+</html>
