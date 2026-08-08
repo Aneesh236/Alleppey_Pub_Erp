@@ -3,4 +3,4 @@
  * value with the Render URL, for example:
  * https://alleppey-pub-api.onrender.com/api
  */
-window.PUB_API_BASE_URL = "https://alleppey-pub-erp.onrender.com//api";
+window.PUB_API_BASE_URL = "https://alleppey-pub-erp.onrender.com/api";
