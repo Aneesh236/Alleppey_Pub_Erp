@@ -1,1633 +1,192 @@
+/* Alleppey Pub ERP - database-backed menu management. */
 "use strict";
 
-const STORAGE_KEY = "pubMenu";
-const CATEGORIES = [
-    "Beer",
-    "Cocktail",
-    "Whisky",
-    "Wine",
-    "Food",
-    "Dessert"
-];
+const MENU_CACHE_KEY = "pubMenu";
+let menuItems = [];
+let editingItemId = null;
 
-const STATUSES = [
-    "Available",
-    "Out of Stock",
-    "Hidden"
-];
+const menuModal = document.getElementById("menuModal");
+const menuForm = document.getElementById("menuForm");
+const tableBody = document.getElementById("menuTableBody");
 
-
-/* ==========================================
-   DEFAULT MENU ITEMS
-========================================== */
-
-const defaultMenu = [
-
+const fallbackMenu = [
     {
-        id: "menu-lager",
+        id: 1,
         image: "../img/lager.jpeg",
         name: "Lager Beer",
-        description: "Fresh, crisp and perfectly chilled lager beer.",
+        description: "Crisp premium lager served chilled.",
         category: "Beer",
-        price: 6,
-        status: "Available",
-        createdAt: "2026-07-01T10:00:00"
+        price: 220,
+        status: "Available"
     },
-
     {
-        id: "menu-mojito",
+        id: 2,
         image: "../img/mojito.jpeg",
         name: "Mojito",
-        description: "A refreshing blend of mint, lime and soda.",
-        category: "Cocktail",
-        price: 7.5,
-        status: "Available",
-        createdAt: "2026-07-01T10:05:00"
+        description: "Fresh mint, lime and soda.",
+        category: "Cocktails",
+        price: 350,
+        status: "Available"
     },
-
     {
-        id: "menu-burger",
+        id: 3,
         image: "../img/burger.jpeg",
         name: "Pub Burger",
-        description: "Juicy pub-style burger served with crispy fries.",
+        description: "Signature burger served with fries.",
         category: "Food",
-        price: 10,
-        status: "Available",
-        createdAt: "2026-07-01T10:10:00"
+        price: 420,
+        status: "Available"
     }
-
 ];
 
+function readCachedMenu() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(MENU_CACHE_KEY));
+        return Array.isArray(saved) && saved.length ? saved : fallbackMenu;
+    } catch (_) {
+        return fallbackMenu;
+    }
+}
 
-/* ==========================================
-   HTML ELEMENTS
-========================================== */
+function cacheMenu() {
+    localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(menuItems));
+}
 
-const elements = {
-
-    table: document.getElementById("menuTable"),
-
-    tableBody: document.getElementById("menuTableBody"),
-
-    emptyState: document.getElementById("emptyState"),
-
-    search: document.getElementById("searchInput"),
-
-    category: document.getElementById("categoryFilter"),
-
-    status: document.getElementById("statusFilter"),
-
-    sort: document.getElementById("sortMenu"),
-
-    filterSummary: document.getElementById("filterSummary"),
-
-    filterSummaryText:
-        document.getElementById("filterSummaryText"),
-
-    resultCount:
-        document.getElementById("resultCount"),
-
-    menuModal:
-        document.getElementById("menuModal"),
-
-    deleteModal:
-        document.getElementById("deleteModal"),
-
-    form:
-        document.getElementById("menuForm"),
-
-    image:
-        document.getElementById("itemImage"),
-
-    name:
-        document.getElementById("itemName"),
-
-    description:
-        document.getElementById("itemDescription"),
-
-    itemCategory:
-        document.getElementById("itemCategory"),
-
-    price:
-        document.getElementById("itemPrice"),
-
-    itemStatus:
-        document.getElementById("itemStatus"),
-
-    previewImage:
-        document.getElementById("previewImage"),
-
-    previewPlaceholder:
-        document.getElementById("previewPlaceholder"),
-
-    toast:
-        document.getElementById("toast"),
-
-    toastMessage:
-        document.getElementById("toastMessage")
-
-};
-
-
-/* ==========================================
-   APPLICATION VARIABLES
-========================================== */
-
-let menuItems = loadMenu();
-
-let editingId = null;
-
-let deletingId = null;
-
-let toastTimer = null;
-
-
-/* ==========================================
-   LOAD MENU
-========================================== */
-
-function loadMenu() {
+async function loadMenu() {
+    menuItems = readCachedMenu();
+    renderMenu(menuItems);
 
     try {
-
-        const savedMenu = localStorage.getItem(STORAGE_KEY);
-
-        const storedItems = JSON.parse(savedMenu);
-
-        if (Array.isArray(storedItems)) {
-
-            const normalizedItems =
-                storedItems.map(normalizeItem);
-
-            localStorage.setItem(
-                STORAGE_KEY,
-                JSON.stringify(normalizedItems)
-            );
-
-            return normalizedItems;
-
-        }
-
+        menuItems = await PubAPI.menu.list();
+        cacheMenu();
+        renderMenu(menuItems);
     } catch (error) {
-
-        console.warn(
-            "The saved menu could not be loaded.",
-            error
-        );
-
+        console.warn("Backend unavailable; showing cached menu.", error);
     }
-
-    const initialItems =
-        defaultMenu.map(normalizeItem);
-
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(initialItems)
-    );
-
-    return initialItems;
-
 }
-
-
-/* ==========================================
-   NORMALIZE MENU ITEM
-========================================== */
-
-function normalizeItem(item, index) {
-
-    const createdAt =
-        item.createdAt ||
-        new Date(Date.now() + index).toISOString();
-
-    return {
-
-        id: String(
-            item.id ||
-            createId(item.name || "item", createdAt)
-        ),
-
-        image: String(
-            item.image ||
-            item.imageUrl ||
-            ""
-        ).trim(),
-
-        name: String(
-            item.name ||
-            "Unnamed item"
-        ).trim(),
-
-        description: String(
-            item.description ||
-            "No description added."
-        ).trim(),
-
-        category:
-            CATEGORIES.includes(item.category)
-                ? item.category
-                : "Food",
-
-        price:
-            toNumber(item.price),
-
-        status:
-            STATUSES.includes(item.status)
-                ? item.status
-                : "Available",
-
-        createdAt: createdAt
-
-    };
-
-}
-
-
-/* ==========================================
-   CREATE UNIQUE ITEM ID
-========================================== */
-
-function createId(name, seed = Date.now()) {
-
-    const slug = String(name)
-
-        .toLowerCase()
-
-        .replace(/[^a-z0-9]+/g, "-")
-
-        .replace(/^-|-$/g, "")
-
-        .slice(0, 24) || "item";
-
-    const datePart = String(seed)
-
-        .replace(/\D/g, "")
-
-        .slice(-8);
-
-    const randomPart = Math.random()
-
-        .toString(36)
-
-        .slice(2, 6);
-
-    return `${slug}-${datePart}-${randomPart}`;
-
-}
-
-
-/* ==========================================
-   CONVERT VALUE TO NUMBER
-========================================== */
-
-function toNumber(value) {
-
-    const parsedNumber = Number(
-
-        String(value ?? "")
-
-            .replace(/[^0-9.-]/g, "")
-
-    );
-
-    return Number.isFinite(parsedNumber)
-        ? parsedNumber
-        : 0;
-
-}
-
-
-/* ==========================================
-   SAVE MENU
-========================================== */
-
-function saveMenu() {
-
-    localStorage.setItem(
-
-        STORAGE_KEY,
-
-        JSON.stringify(menuItems)
-
-    );
-
-}
-
-
-/* ==========================================
-   ESCAPE HTML
-========================================== */
 
 function escapeHTML(value) {
-
-    const element =
-        document.createElement("div");
-
-    element.textContent =
-        String(value ?? "");
-
-    return element.innerHTML;
-
+    const node = document.createElement("div");
+    node.textContent = String(value ?? "");
+    return node.innerHTML;
 }
 
-
-/* ==========================================
-   FILTER AND SORT ITEMS
-========================================== */
-
-function getVisibleItems() {
-
-    const searchValue =
-        elements.search.value
-            .trim()
-            .toLowerCase();
-
-    const selectedCategory =
-        elements.category.value;
-
-    const selectedStatus =
-        elements.status.value;
-
-    return menuItems
-
-        .filter((item) => {
-
-            const searchableText = `
-
-                ${item.name}
-
-                ${item.description}
-
-                ${item.category}
-
-            `.toLowerCase();
-
-            const matchesSearch =
-                !searchValue ||
-                searchableText.includes(searchValue);
-
-            const matchesCategory =
-                selectedCategory === "All" ||
-                item.category === selectedCategory;
-
-            const matchesStatus =
-                selectedStatus === "All" ||
-                item.status === selectedStatus;
-
-            return (
-                matchesSearch &&
-                matchesCategory &&
-                matchesStatus
-            );
-
-        })
-
-        .sort((firstItem, secondItem) => {
-
-            switch (elements.sort.value) {
-
-                case "name-desc":
-
-                    return secondItem.name.localeCompare(
-                        firstItem.name
-                    );
-
-                case "price-high":
-
-                    return (
-                        secondItem.price -
-                        firstItem.price
-                    );
-
-                case "price-low":
-
-                    return (
-                        firstItem.price -
-                        secondItem.price
-                    );
-
-                case "newest":
-
-                    return (
-                        new Date(secondItem.createdAt) -
-                        new Date(firstItem.createdAt)
-                    );
-
-                default:
-
-                    return firstItem.name.localeCompare(
-                        secondItem.name
-                    );
-
-            }
-
-        });
-
-}
-
-
-/* ==========================================
-   DISPLAY MENU
-========================================== */
-
-function renderMenu() {
-
-    const visibleItems =
-        getVisibleItems();
-
-    elements.tableBody.innerHTML =
-        visibleItems
-            .map(itemRow)
-            .join("");
-
-    elements.table.hidden =
-        visibleItems.length === 0;
-
-    elements.emptyState.hidden =
-        visibleItems.length !== 0;
-
-    elements.resultCount.textContent = `
-
-        ${visibleItems.length}
-
-        ${visibleItems.length === 1
-            ? "item"
-            : "items"}
-
-    `;
-
-    bindImageFallbacks();
-
-    renderStats();
-
-    renderFilterSummary();
-
-}
-
-
-/* ==========================================
-   CREATE TABLE ROW
-========================================== */
-
-function itemRow(item) {
-
-    const imageHTML = item.image
-
-        ? `
-            <img
-                src="${escapeHTML(item.image)}"
-                alt="${escapeHTML(item.name)}"
-            >
-        `
-
-        : "";
-
-    const statusClass = item.status
-
-        .toLowerCase()
-
-        .replaceAll(" ", "-");
-
-    return `
-
-        <tr>
-
-            <td data-label="Item">
-
-                <div class="item-cell">
-
-                    <span class="item-thumb">
-
-                        ${imageHTML}
-
-                        <i
-                            class="fa-solid fa-utensils"
-
-                            ${imageHTML
-                                ? "hidden"
-                                : ""}
-                        ></i>
-
-                    </span>
-
-                    <span>
-
-                        <strong class="item-name">
-
-                            ${escapeHTML(item.name)}
-
-                        </strong>
-
-                        <small class="item-code">
-
-                            #${escapeHTML(
-                                item.id
-                                    .slice(-8)
-                                    .toUpperCase()
-                            )}
-
-                        </small>
-
-                    </span>
-
-                </div>
-
-            </td>
-
-            <td
-                data-label="Description"
-                class="description-cell"
-            >
-
-                ${escapeHTML(item.description)}
-
-            </td>
-
-            <td data-label="Category">
-
-                <span class="category-badge">
-
-                    <i class="${categoryIcon(
-                        item.category
-                    )}"></i>
-
-                    ${escapeHTML(item.category)}
-
-                </span>
-
-            </td>
-
-            <td
-                data-label="Price"
-                class="price-cell"
-            >
-
-                £${item.price.toFixed(2)}
-
-            </td>
-
-            <td data-label="Status">
-
-                <span
-                    class="status-badge status-${statusClass}"
-                >
-
-                    ${escapeHTML(item.status)}
-
-                </span>
-
-            </td>
-
-            <td data-label="Actions">
-
-                <div class="row-actions">
-
-                    <button
-                        class="action-button"
-                        type="button"
-                        data-action="edit"
-                        data-id="${escapeHTML(item.id)}"
-                        aria-label="Edit ${escapeHTML(item.name)}"
-                        title="Edit item"
-                    >
-
-                        <i
-                            class="fa-regular fa-pen-to-square"
-                        ></i>
-
+function renderMenu(items) {
+    tableBody.innerHTML = items.map(item => {
+        const statusClass = item.status === "Available"
+            ? "available"
+            : item.status === "Out of Stock" ? "out" : "hidden";
+
+        return `
+            <tr>
+                <td><img src="${escapeHTML(item.image)}" alt="" width="70"></td>
+                <td>${escapeHTML(item.name)}</td>
+                <td>${escapeHTML(item.description)}</td>
+                <td>${escapeHTML(item.category)}</td>
+                <td>₹${Number(item.price).toFixed(2)}</td>
+                <td><span class="status ${statusClass}">${escapeHTML(item.status)}</span></td>
+                <td>
+                    <button class="action-btn edit" type="button" onclick="editItem(${Number(item.id)})">
+                        <i class="fa-solid fa-pen"></i>
                     </button>
-
-                    <button
-                        class="action-button delete"
-                        type="button"
-                        data-action="delete"
-                        data-id="${escapeHTML(item.id)}"
-                        aria-label="Delete ${escapeHTML(item.name)}"
-                        title="Delete item"
-                    >
-
-                        <i
-                            class="fa-regular fa-trash-can"
-                        ></i>
-
+                    <button class="action-btn delete" type="button" onclick="deleteItem(${Number(item.id)})">
+                        <i class="fa-solid fa-trash"></i>
                     </button>
-
-                </div>
-
-            </td>
-
-        </tr>
-
-    `;
-
+                </td>
+            </tr>`;
+    }).join("");
 }
 
+function openMenuModal(title) {
+    document.querySelector(".modal-content h2").innerText = title;
+    menuModal.style.display = "flex";
+}
 
-/* ==========================================
-   CATEGORY ICONS
-========================================== */
+document.getElementById("openModal").onclick = () => {
+    editingItemId = null;
+    menuForm.reset();
+    openMenuModal("Add Menu Item");
+};
 
-function categoryIcon(category) {
+document.getElementById("closeModal").onclick = () => {
+    menuModal.style.display = "none";
+};
 
-    const icons = {
+window.addEventListener("click", event => {
+    if (event.target === menuModal) menuModal.style.display = "none";
+});
 
-        Beer:
-            "fa-solid fa-beer-mug-empty",
+menuForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-        Cocktail:
-            "fa-solid fa-martini-glass-citrus",
-
-        Whisky:
-            "fa-solid fa-whiskey-glass",
-
-        Wine:
-            "fa-solid fa-wine-glass",
-
-        Food:
-            "fa-solid fa-burger",
-
-        Dessert:
-            "fa-solid fa-ice-cream"
-
+    const item = {
+        image: document.getElementById("itemImage").value.trim(),
+        name: document.getElementById("itemName").value.trim(),
+        description: document.getElementById("itemDescription").value.trim(),
+        category: document.getElementById("itemCategory").value,
+        price: Number(document.getElementById("itemPrice").value),
+        status: document.getElementById("itemStatus").value
     };
 
-    return (
-        icons[category] ||
-        "fa-solid fa-utensils"
-    );
+    try {
+        const savedItem = editingItemId === null
+            ? await PubAPI.menu.create(item)
+            : await PubAPI.menu.update(editingItemId, item);
 
+        const index = menuItems.findIndex(existing => Number(existing.id) === Number(savedItem.id));
+        if (index === -1) menuItems.push(savedItem);
+        else menuItems[index] = savedItem;
+    } catch (error) {
+        const localItem = { ...item, id: editingItemId ?? Date.now() };
+        const index = menuItems.findIndex(existing => Number(existing.id) === Number(localItem.id));
+        if (index === -1) menuItems.push(localItem);
+        else menuItems[index] = localItem;
+        alert(`Saved only in this browser because the backend is unavailable. ${error.message}`);
+    }
+
+    cacheMenu();
+    renderMenu(menuItems);
+    menuModal.style.display = "none";
+    menuForm.reset();
+    editingItemId = null;
+});
+
+function editItem(id) {
+    const item = menuItems.find(entry => Number(entry.id) === Number(id));
+    if (!item) return;
+
+    editingItemId = Number(item.id);
+    document.getElementById("itemImage").value = item.image;
+    document.getElementById("itemName").value = item.name;
+    document.getElementById("itemDescription").value = item.description;
+    document.getElementById("itemCategory").value = item.category;
+    document.getElementById("itemPrice").value = item.price;
+    document.getElementById("itemStatus").value = item.status;
+    openMenuModal("Edit Menu Item");
 }
 
+async function deleteItem(id) {
+    if (!confirm("Delete this menu item?")) return;
 
-/* ==========================================
-   IMAGE ERROR FALLBACK
-========================================== */
+    try {
+        await PubAPI.menu.remove(id);
+    } catch (error) {
+        alert(`Deleted only from this browser because the backend is unavailable. ${error.message}`);
+    }
 
-function bindImageFallbacks() {
-
-    const images =
-        elements.tableBody.querySelectorAll(
-            ".item-thumb img"
-        );
-
-    images.forEach((image) => {
-
-        image.addEventListener(
-
-            "error",
-
-            () => {
-
-                image.hidden = true;
-
-                image.nextElementSibling.hidden =
-                    false;
-
-            },
-
-            {
-                once: true
-            }
-
-        );
-
-    });
-
+    menuItems = menuItems.filter(item => Number(item.id) !== Number(id));
+    cacheMenu();
+    renderMenu(menuItems);
 }
 
-
-/* ==========================================
-   DISPLAY STATISTICS
-========================================== */
-
-function renderStats() {
-
-    const averagePrice =
-        menuItems.length
-
-            ? menuItems.reduce(
-
-                (total, item) =>
-                    total + item.price,
-
-                0
-
-            ) / menuItems.length
-
-            : 0;
-
-    const availableCount =
-        menuItems.filter(
-
-            (item) =>
-                item.status === "Available"
-
-        ).length;
-
-    const outOfStockCount =
-        menuItems.filter(
-
-            (item) =>
-                item.status === "Out of Stock"
-
-        ).length;
-
-    document.getElementById(
-        "totalItems"
-    ).textContent = menuItems.length;
-
-    document.getElementById(
-        "availableItems"
-    ).textContent = availableCount;
-
-    document.getElementById(
-        "outOfStockItems"
-    ).textContent = outOfStockCount;
-
-    document.getElementById(
-        "averagePrice"
-    ).textContent =
-        `£${averagePrice.toFixed(2)}`;
-
-}
-
-
-/* ==========================================
-   FILTER SUMMARY
-========================================== */
-
-function renderFilterSummary() {
-
-    const filterParts = [];
-
-    const searchValue =
-        elements.search.value.trim();
-
-    if (searchValue) {
-
-        filterParts.push(
-            `Search: “${searchValue}”`
-        );
-
-    }
-
-    if (elements.category.value !== "All") {
-
-        filterParts.push(
-            `Category: ${elements.category.value}`
-        );
-
-    }
-
-    if (elements.status.value !== "All") {
-
-        filterParts.push(
-            `Status: ${elements.status.value}`
-        );
-
-    }
-
-    const searchContainer =
-        elements.search.closest(
-            ".search-control"
-        );
-
-    searchContainer.classList.toggle(
-
-        "has-value",
-
-        Boolean(searchValue)
-
-    );
-
-    elements.filterSummary.hidden =
-        filterParts.length === 0;
-
-    elements.filterSummaryText.textContent =
-        filterParts.join(" · ");
-
-}
-
-
-/* ==========================================
-   RESET FILTERS
-========================================== */
-
-function resetFilters() {
-
-    elements.search.value = "";
-
-    elements.category.value = "All";
-
-    elements.status.value = "All";
-
-    elements.sort.value = "name-asc";
-
-    renderMenu();
-
-}
-
-
-/* ==========================================
-   OPEN ADD OR EDIT MODAL
-========================================== */
-
-function openItemModal(itemId = null) {
-
-    editingId = itemId;
-
-    elements.form.reset();
-
-    clearErrors();
-
-    const item = itemId
-
-        ? menuItems.find(
-
-            (entry) =>
-                entry.id === itemId
-
-        )
-
-        : null;
-
-    document.getElementById(
-        "modalMode"
-    ).textContent = item
-
-        ? "EDIT MENU ITEM"
-
-        : "NEW MENU ITEM";
-
-    document.getElementById(
-        "modalTitle"
-    ).textContent = item
-
-        ? "Edit Menu Item"
-
-        : "Add Menu Item";
-
-    document.getElementById(
-        "saveButtonText"
-    ).textContent = item
-
-        ? "Update Item"
-
-        : "Save Item";
-
-    if (item) {
-
-        elements.image.value =
-            item.image;
-
-        elements.name.value =
-            item.name;
-
-        elements.description.value =
-            item.description;
-
-        elements.itemCategory.value =
-            item.category;
-
-        elements.price.value =
-            item.price;
-
-        elements.itemStatus.value =
-            item.status;
-
-    } else {
-
-        elements.itemStatus.value =
-            "Available";
-
-    }
-
-    updatePreview();
-
-    updateDescriptionCount();
-
-    showModal(elements.menuModal);
-
-}
-
-
-/* ==========================================
-   IMAGE PREVIEW
-========================================== */
-
-function updatePreview() {
-
-    const imageSource =
-        elements.image.value.trim();
-
-    elements.previewImage.hidden =
-        !imageSource;
-
-    elements.previewPlaceholder.hidden =
-        Boolean(imageSource);
-
-    if (imageSource) {
-
-        elements.previewImage.src =
-            imageSource;
-
-        elements.previewImage.onerror =
-            () => {
-
-                elements.previewImage.hidden =
-                    true;
-
-                elements.previewPlaceholder.hidden =
-                    false;
-
-            };
-
-        elements.previewImage.onload =
-            () => {
-
-                elements.previewImage.hidden =
-                    false;
-
-                elements.previewPlaceholder.hidden =
-                    true;
-
-            };
-
-    } else {
-
-        elements.previewImage.removeAttribute(
-            "src"
-        );
-
-    }
-
-}
-
-
-/* ==========================================
-   DESCRIPTION CHARACTER COUNT
-========================================== */
-
-function updateDescriptionCount() {
-
-    document.getElementById(
-        "descriptionCount"
-    ).textContent =
-        elements.description.value.length;
-
-}
-
-
-/* ==========================================
-   VALIDATE FORM
-========================================== */
-
-function validateForm() {
-
-    clearErrors();
-
-    let isValid = true;
-
-    if (!elements.name.value.trim()) {
-
-        document.getElementById(
-            "nameError"
-        ).textContent =
-            "Please enter an item name.";
-
-        isValid = false;
-
-    }
-
-    if (toNumber(elements.price.value) <= 0) {
-
-        document.getElementById(
-            "priceError"
-        ).textContent =
-            "Enter a price greater than zero.";
-
-        isValid = false;
-
-    }
-
-    return isValid;
-
-}
-
-
-/* ==========================================
-   CLEAR FORM ERRORS
-========================================== */
-
-function clearErrors() {
-
-    document.getElementById(
-        "nameError"
-    ).textContent = "";
-
-    document.getElementById(
-        "priceError"
-    ).textContent = "";
-
-}
-
-
-/* ==========================================
-   SHOW MODAL
-========================================== */
-
-function showModal(modal) {
-
-    modal.hidden = false;
-
-    document.body.classList.add(
-        "modal-open"
-    );
-
-    window.setTimeout(
-
-        () => {
-
-            modal.querySelector(
-                "input, button"
-            )?.focus();
-
-        },
-
-        50
-
-    );
-
-}
-
-
-/* ==========================================
-   CLOSE MODAL
-========================================== */
-
-function closeModal(modal) {
-
-    modal.hidden = true;
-
-    if (
-        elements.menuModal.hidden &&
-        elements.deleteModal.hidden
-    ) {
-
-        document.body.classList.remove(
-            "modal-open"
-        );
-
-    }
-
-}
-
-
-/* ==========================================
-   SHOW DELETE MODAL
-========================================== */
-
-function showDeleteModal(itemId) {
-
-    const item =
-        menuItems.find(
-
-            (entry) =>
-                entry.id === itemId
-
-        );
-
-    if (!item) {
-
-        return;
-
-    }
-
-    deletingId = itemId;
-
-    document.getElementById(
-        "deleteItemName"
-    ).textContent = item.name;
-
-    showModal(elements.deleteModal);
-
-}
-
-
-/* ==========================================
-   SHOW NOTIFICATION
-========================================== */
-
-function showToast(message) {
-
-    window.clearTimeout(toastTimer);
-
-    elements.toastMessage.textContent =
-        message;
-
-    elements.toast.classList.add(
-        "show"
-    );
-
-    toastTimer = window.setTimeout(
-
-        () => {
-
-            elements.toast.classList.remove(
-                "show"
-            );
-
-        },
-
-        2700
-
-    );
-
-}
-
-
-/* ==========================================
-   TABLE EDIT AND DELETE BUTTONS
-========================================== */
-
-elements.tableBody.addEventListener(
-
-    "click",
-
-    (event) => {
-
-        const button =
-            event.target.closest(
-                "[data-action]"
-            );
-
-        if (!button) {
-
-            return;
-
-        }
-
-        if (
-            button.dataset.action === "edit"
-        ) {
-
-            openItemModal(
-                button.dataset.id
-            );
-
-        }
-
-        if (
-            button.dataset.action === "delete"
-        ) {
-
-            showDeleteModal(
-                button.dataset.id
-            );
-
-        }
-
-    }
-
-);
-
-
-/* ==========================================
-   ADD OR UPDATE ITEM
-========================================== */
-
-elements.form.addEventListener(
-
-    "submit",
-
-    (event) => {
-
-        event.preventDefault();
-
-        if (!validateForm()) {
-
-            return;
-
-        }
-
-        const existingItem = editingId
-
-            ? menuItems.find(
-
-                (item) =>
-                    item.id === editingId
-
-            )
-
-            : null;
-
-        const menuItem = normalizeItem(
-
-            {
-
-                id:
-                    existingItem?.id ||
-                    createId(
-                        elements.name.value
-                    ),
-
-                image:
-                    elements.image.value,
-
-                name:
-                    elements.name.value,
-
-                description:
-                    elements.description.value ||
-                    "No description added.",
-
-                category:
-                    elements.itemCategory.value,
-
-                price:
-                    elements.price.value,
-
-                status:
-                    elements.itemStatus.value,
-
-                createdAt:
-                    existingItem?.createdAt ||
-                    new Date().toISOString()
-
-            },
-
-            menuItems.length
-
-        );
-
-        if (existingItem) {
-
-            menuItems = menuItems.map(
-
-                (item) =>
-                    item.id === editingId
-
-                        ? menuItem
-
-                        : item
-
-            );
-
-        } else {
-
-            menuItems.push(menuItem);
-
-        }
-
-        saveMenu();
-
-        renderMenu();
-
-        closeModal(elements.menuModal);
-
-        showToast(
-
-            existingItem
-
-                ? `${menuItem.name} was updated`
-
-                : `${menuItem.name} was added to the menu`
-
-        );
-
-        editingId = null;
-
-    }
-
-);
-
-
-/* ==========================================
-   DELETE ITEM
-========================================== */
-
-document.getElementById(
-    "confirmDelete"
-).addEventListener(
-
-    "click",
-
-    () => {
-
-        const item =
-            menuItems.find(
-
-                (entry) =>
-                    entry.id === deletingId
-
-            );
-
-        if (!item) {
-
-            return;
-
-        }
-
-        menuItems = menuItems.filter(
-
-            (entry) =>
-                entry.id !== deletingId
-
-        );
-
-        saveMenu();
-
-        renderMenu();
-
-        closeModal(elements.deleteModal);
-
-        showToast(
-            `${item.name} was deleted`
-        );
-
-        deletingId = null;
-
-    }
-
-);
-
-
-/* ==========================================
-   FILTER EVENT LISTENERS
-========================================== */
-
-elements.search.addEventListener(
-    "input",
-    renderMenu
-);
-
-elements.category.addEventListener(
-    "change",
-    renderMenu
-);
-
-elements.status.addEventListener(
-    "change",
-    renderMenu
-);
-
-elements.sort.addEventListener(
-    "change",
-    renderMenu
-);
-
-
-/* ==========================================
-   FORM EVENT LISTENERS
-========================================== */
-
-elements.image.addEventListener(
-    "input",
-    updatePreview
-);
-
-elements.description.addEventListener(
-    "input",
-    updateDescriptionCount
-);
-
-
-/* ==========================================
-   CLEAR SEARCH
-========================================== */
-
-document.getElementById(
-    "clearSearch"
-).addEventListener(
-
-    "click",
-
-    () => {
-
-        elements.search.value = "";
-
-        elements.search.focus();
-
-        renderMenu();
-
-    }
-
-);
-
-
-/* ==========================================
-   BUTTON EVENT LISTENERS
-========================================== */
-
-document.getElementById(
-    "resetFilters"
-).addEventListener(
-
-    "click",
-
-    resetFilters
-
-);
-
-document.getElementById(
-    "emptyAction"
-).addEventListener(
-
-    "click",
-
-    resetFilters
-
-);
-
-document.getElementById(
-    "openModal"
-).addEventListener(
-
-    "click",
-
-    () => openItemModal()
-
-);
-
-document.getElementById(
-    "closeModal"
-).addEventListener(
-
-    "click",
-
-    () => closeModal(
-        elements.menuModal
-    )
-
-);
-
-document.getElementById(
-    "cancelForm"
-).addEventListener(
-
-    "click",
-
-    () => closeModal(
-        elements.menuModal
-    )
-
-);
-
-document.getElementById(
-    "cancelDelete"
-).addEventListener(
-
-    "click",
-
-    () => closeModal(
-        elements.deleteModal
-    )
-
-);
-
-document.getElementById(
-    "backButton"
-).addEventListener(
-
-    "click",
-
-    () => {
-
-        window.location.href =
-            "../html/admin-dashboard.html";
-
-    }
-
-);
-
-
-/* ==========================================
-   MODAL BACKDROP
-========================================== */
-
-document.querySelectorAll(
-    "[data-close]"
-).forEach(
-
-    (backdrop) => {
-
-        backdrop.addEventListener(
-
-            "click",
-
-            () => {
-
-                const modal =
-                    backdrop.dataset.close === "menu"
-
-                        ? elements.menuModal
-
-                        : elements.deleteModal;
-
-                closeModal(modal);
-
-            }
-
-        );
-
-    }
-
-);
-
-
-/* ==========================================
-   ESCAPE KEY
-========================================== */
-
-document.addEventListener(
-
-    "keydown",
-
-    (event) => {
-
-        if (event.key !== "Escape") {
-
-            return;
-
-        }
-
-        if (!elements.deleteModal.hidden) {
-
-            closeModal(
-                elements.deleteModal
-            );
-
-        } else if (
-            !elements.menuModal.hidden
-        ) {
-
-            closeModal(
-                elements.menuModal
-            );
-
-        }
-
-    }
-
-);
-
-
-/* ==========================================
-   UPDATE BETWEEN BROWSER TABS
-========================================== */
-
-window.addEventListener(
-
-    "storage",
-
-    (event) => {
-
-        if (event.key !== STORAGE_KEY) {
-
-            return;
-
-        }
-
-        menuItems = loadMenu();
-
-        renderMenu();
-
-        showToast(
-            "Menu updated in another tab"
-        );
-
-    }
-
-);
-
-
-/* ==========================================
-   DISPLAY CURRENT DATE
-========================================== */
-
-document.getElementById(
-    "currentDate"
-).textContent = new Intl.DateTimeFormat(
-
-    "en-GB",
-
-    {
-
-        weekday: "long",
-
-        day: "2-digit",
-
-        month: "long",
-
-        year: "numeric"
-
-    }
-
-).format(new Date());
-
-
-/* ==========================================
-   START APPLICATION
-========================================== */
-
-renderMenu();
+document.getElementById("searchInput").addEventListener("input", event => {
+    const value = event.target.value.toLowerCase();
+    renderMenu(menuItems.filter(item => item.name.toLowerCase().includes(value)));
+});
+
+document.getElementById("categoryFilter").addEventListener("change", event => {
+    const category = event.target.value;
+    renderMenu(category === "All" ? menuItems : menuItems.filter(item => item.category === category));
+});
+
+loadMenu();

@@ -3,11 +3,14 @@
    AI BUSINESS ASSISTANT
 ========================================= */
 
-const AI_API_URL =
-    "https://alleppey-pub-erp.onrender.com/api/ai/analyse";
+const AI_BASE_URL = (
+    window.PUB_API_BASE_URL ||
+    "https://alleppey-pub-erp.onrender.com/api"
+).replace(/\/$/, "");
 
-const AI_HEALTH_URL =
-    "https://alleppey-pub-erp.onrender.com/health";
+const AI_API_URL = `${AI_BASE_URL}/ai/analyse`;
+
+const AI_HEALTH_URL = `${AI_BASE_URL.replace(/\/api$/, "")}/health`;
 
 const ORDER_STORAGE_KEY =
     "pubOrders";

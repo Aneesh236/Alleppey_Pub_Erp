@@ -3,8 +3,10 @@
    CUSTOMER AI CONCIERGE
 ========================================= */
 
-const CUSTOMER_AI_URL =
-    "https://alleppey-pub-erp.onrender.com/api/ai/customer";
+const CUSTOMER_AI_URL = `${(
+    window.PUB_API_BASE_URL ||
+    "https://alleppey-pub-erp.onrender.com/api"
+).replace(/\/$/, "")}/ai/customer`;
 
 const customerAiMessages =
     document.getElementById(

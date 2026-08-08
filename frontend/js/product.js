@@ -241,6 +241,13 @@ function openProduct(productKey) {
 
     panelOrigin.innerText = currentProduct.origin;
 
+    addCartBtn.disabled =
+        currentProduct.status === "Out of Stock";
+
+    addCartBtn.title = addCartBtn.disabled
+        ? "This item is currently out of stock"
+        : "Add this item to the cart";
+
     quantity = 1;
 
     updateQuantityDisplay();
@@ -323,7 +330,7 @@ function updateCartBadge() {
 
 addCartBtn.addEventListener("click", function () {
 
-    if (!currentProduct) return;
+    if (!currentProduct || currentProduct.status === "Out of Stock") return;
 
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
@@ -427,6 +434,75 @@ document.querySelectorAll(".add-btn").forEach(button => {
 });
 
 /* ==========================================
+   SYNC DISPLAYED MENU WITH DATABASE
+========================================== */
+
+async function syncMenuFromDatabase() {
+
+    try {
+
+        const databaseItems = await PubAPI.menu.list();
+
+        const byName = new Map(
+            databaseItems.map(item => [
+                String(item.name).trim().toLowerCase(),
+                item
+            ])
+        );
+
+        Object.entries(products).forEach(([productKey, product]) => {
+
+            const item = byName.get(product.title.toLowerCase());
+            const card = document.querySelector(
+                `.menu-card[data-product="${productKey}"]`
+            );
+
+            if (!card) return;
+
+            if (!item) {
+                card.dataset.status = "Hidden";
+                card.hidden = true;
+                return;
+            }
+
+            product.id = item.id;
+            product.title = item.name;
+            product.subtitle = item.description;
+            product.description = item.description;
+            product.image = item.image;
+            product.price = Number(item.price);
+            product.category = item.category;
+            product.status = item.status;
+
+            card.dataset.category = item.category;
+            card.dataset.status = item.status;
+            card.querySelector("img").src = item.image;
+            card.querySelector("img").alt = item.name;
+            card.querySelector("h3").textContent = item.name;
+            card.querySelector(".description").textContent = item.description;
+            card.querySelector(".category").textContent = item.category;
+            card.querySelector(".price").textContent = `₹${Number(item.price).toFixed(0)}`;
+
+            const addButton = card.querySelector(".add-btn");
+            const unavailable = item.status === "Out of Stock";
+            addButton.disabled = unavailable;
+            addButton.title = unavailable ? "Out of stock" : "Add to cart";
+            card.hidden = item.status === "Hidden";
+        });
+
+    } catch (error) {
+
+        console.warn(
+            "Backend unavailable; showing the built-in menu.",
+            error
+        );
+
+    }
+
+}
+
+
+/* ==========================================
    INITIALIZATION
 ========================================== */
 
@@ -435,6 +511,8 @@ updateCartBadge();
 
 // Reset quantity display
 updateQuantityDisplay();
+
+syncMenuFromDatabase();
 
 
 /* ==========================================

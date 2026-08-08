@@ -5,13 +5,14 @@
     const configuredUrl =
         window.PUB_API_BASE_URL ||
         localStorage.getItem("pubApiBaseUrl") ||
-        "http://127.0.0.1:8000/api";
+        "https://alleppey-pub-erp.onrender.com/api";
 
     const baseUrl = configuredUrl.replace(/\/$/, "");
 
     async function request(path, options = {}) {
         const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), 7000);
+        // Render may need a little time to respond after a period of inactivity.
+        const timeout = window.setTimeout(() => controller.abort(), 30000);
 
         try {
             const response = await fetch(`${baseUrl}${path}`, {
@@ -35,6 +36,11 @@
             }
 
             return response.status === 204 ? null : response.json();
+        } catch (error) {
+            if (error && error.name === "AbortError") {
+                throw new Error("The server took too long to respond. Please try again.");
+            }
+            throw error;
         } finally {
             window.clearTimeout(timeout);
         }

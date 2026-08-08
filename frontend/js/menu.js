@@ -28,7 +28,8 @@
                 category === normalize(activeCategory);
             const searchMatches =
                 !searchTerm || searchableText.includes(normalize(searchTerm));
-            const shouldShow = categoryMatches && searchMatches;
+            const statusMatches = normalize(card.dataset.status) !== "hidden";
+            const shouldShow = categoryMatches && searchMatches && statusMatches;
 
             card.hidden = !shouldShow;
 

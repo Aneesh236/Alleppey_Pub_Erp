@@ -659,7 +659,7 @@ placeOrderBtn.addEventListener(
 );
 
 
-function placeOrder() {
+async function placeOrder() {
 
     if (!validateCheckout()) {
 
@@ -819,7 +819,33 @@ const grandTotal =
     };
 
 
-    orders.push(newOrder);
+    let persistedOrder;
+
+    try {
+
+        persistedOrder = await PubAPI.orders.create(newOrder);
+
+    } catch (error) {
+
+        console.error("Order could not be saved to the database.", error);
+
+        showToast(
+            error.message || "The order could not reach the server. Please try again.",
+            "error"
+        );
+
+        placeOrderBtn.disabled = false;
+        placeOrderBtn.innerHTML = `
+            <i class="fa-solid fa-check"></i>
+            Place Order
+        `;
+
+        return;
+
+    }
+
+
+    orders.push(persistedOrder);
 
 
     localStorage.setItem(
@@ -830,7 +856,7 @@ const grandTotal =
 
     localStorage.setItem(
         LATEST_ORDER_KEY,
-        JSON.stringify(newOrder)
+        JSON.stringify(persistedOrder)
     );
 
 
@@ -843,7 +869,7 @@ const grandTotal =
 
 
     showToast(
-        `Order #${orderId} placed successfully.`,
+        `Order #${persistedOrder.id} placed successfully.`,
         "success"
     );
 

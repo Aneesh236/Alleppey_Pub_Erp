@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
     receipt += `\nTotal: £${total.toFixed(2)}\n\n`;
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/analyze-sales", {
+      const response = await fetch("https://alleppey-pub-erp.onrender.com/api/ai/analyse", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const result = await response.json();
 
-      receipt += "🤖 AI Insight:\n" + result.insight;
+      receipt += "🤖 AI Insight:\n" + result.answer;
 
     } catch (error) {
       console.error(error);

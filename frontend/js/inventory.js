@@ -318,6 +318,54 @@ function loadInventory() {
 }
 
 
+async function refreshInventoryFromApi(showMessage = false) {
+
+    try {
+
+        const serverItems =
+            await PubAPI.inventory.list();
+
+        inventoryItems =
+            serverItems.map(normalizeInventoryItem);
+
+        saveInventory();
+
+        filterInventory();
+
+        if (showMessage) {
+
+            showToast(
+                "Inventory loaded from the database.",
+                "success"
+            );
+
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Backend unavailable; showing cached inventory.",
+            error
+        );
+
+        if (showMessage) {
+
+            showToast(
+                "Showing cached inventory while the backend is unavailable.",
+                "error"
+            );
+
+        }
+
+        return false;
+
+    }
+
+}
+
+
 /* =========================================
    NORMALIZE INVENTORY ITEM
 ========================================= */
@@ -942,7 +990,7 @@ function editInventoryItem(id) {
 
 inventoryForm.addEventListener(
     "submit",
-    function (event) {
+    async function (event) {
 
         event.preventDefault();
 
@@ -1029,7 +1077,12 @@ inventoryForm.addEventListener(
         }
 
 
-        if (editingItemId !== null) {
+        const wasEditing =
+            editingItemId !== null;
+
+        let itemToPersist = null;
+
+        if (wasEditing) {
 
             const itemIndex =
                 inventoryItems.findIndex(
@@ -1073,6 +1126,9 @@ inventoryForm.addEventListener(
 
             };
 
+            itemToPersist =
+                inventoryItems[itemIndex];
+
             showToast(
                 "Inventory item updated successfully.",
                 "success"
@@ -1107,9 +1163,50 @@ inventoryForm.addEventListener(
 
             inventoryItems.push(newItem);
 
+            itemToPersist = newItem;
+
             showToast(
                 "Inventory item added successfully.",
                 "success"
+            );
+
+        }
+
+        try {
+
+            const savedItem = wasEditing
+                ? await PubAPI.inventory.update(
+                    itemToPersist.id,
+                    itemToPersist
+                )
+                : await PubAPI.inventory.create(
+                    itemToPersist
+                );
+
+            const localIndex =
+                inventoryItems.findIndex(
+                    inventoryItem =>
+                        inventoryItem.id ===
+                        itemToPersist.id
+                );
+
+            if (localIndex !== -1) {
+
+                inventoryItems[localIndex] =
+                    normalizeInventoryItem(savedItem);
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Inventory change was saved only in this browser.",
+                error
+            );
+
+            showToast(
+                "Saved locally; the backend is unavailable.",
+                "error"
             );
 
         }
@@ -1243,7 +1340,7 @@ function openStockModal(id) {
 
 confirmStockUpdateBtn.addEventListener(
     "click",
-    function () {
+    async function () {
 
         const item =
             inventoryItems.find(
@@ -1317,6 +1414,28 @@ confirmStockUpdateBtn.addEventListener(
             Number(
                 item.currentStock.toFixed(2)
             );
+
+        try {
+
+            const savedItem =
+                await PubAPI.inventory.update(
+                    item.id,
+                    item
+                );
+
+            Object.assign(
+                item,
+                normalizeInventoryItem(savedItem)
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Stock change was saved only in this browser.",
+                error
+            );
+
+        }
 
         saveInventory();
 
@@ -1398,7 +1517,7 @@ function openDeleteModal(id) {
 
 confirmDeleteItemBtn.addEventListener(
     "click",
-    function () {
+    async function () {
 
         const item =
             inventoryItems.find(
@@ -1418,6 +1537,25 @@ confirmDeleteItemBtn.addEventListener(
 
         }
 
+        let databaseUpdated = true;
+
+        try {
+
+            await PubAPI.inventory.remove(
+                selectedDeleteItemId
+            );
+
+        } catch (error) {
+
+            databaseUpdated = false;
+
+            console.warn(
+                "Inventory item was deleted only from this browser.",
+                error
+            );
+
+        }
+
         inventoryItems =
             inventoryItems.filter(
                 inventoryItem =>
@@ -1430,8 +1568,10 @@ confirmDeleteItemBtn.addEventListener(
         closeModal(deleteInventoryModal);
 
         showToast(
-            `${item.name} deleted successfully.`,
-            "success"
+            databaseUpdated
+                ? `${item.name} deleted successfully.`
+                : `${item.name} removed from this browser only.`,
+            databaseUpdated ? "success" : "error"
         );
 
         selectedDeleteItemId = null;
@@ -1621,6 +1761,8 @@ function initializeInventoryPage() {
     loadInventory();
 
     renderInventory();
+
+    refreshInventoryFromApi();
 
 }
 

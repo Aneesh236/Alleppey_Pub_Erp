@@ -156,6 +156,21 @@ function loadOrders() {
     return [...uniqueOrders.values()];
 }
 
+async function refreshOrdersFromApi(showMessage = true) {
+    try {
+        const serverOrders = await PubAPI.orders.list();
+        orders = serverOrders.map(normalizeOrder);
+        saveOrders();
+        renderOrders();
+        if (showMessage) showToast("Orders loaded from the database");
+        return true;
+    } catch (error) {
+        console.warn("Backend unavailable; showing cached orders.", error);
+        if (showMessage) showToast("Showing cached orders while the backend is unavailable");
+        return false;
+    }
+}
+
 function normalizeOrder(order, index = 0) {
     const customerObject = order.customerDetails || order.customerInfo || {};
     const rawItems = Array.isArray(order.items)
@@ -262,7 +277,7 @@ function calculateTotal(order) {
 }
 
 function currency(value) {
-    return `£${Number(value).toFixed(2)}`;
+    return `₹${Number(value).toFixed(2)}`;
 }
 
 function escapeHTML(value) {
@@ -506,38 +521,59 @@ document.getElementById("cancelDelete").addEventListener("click", () => {
     closeModal(elements.deleteModal);
 });
 
-document.getElementById("confirmDelete").addEventListener("click", () => {
+document.getElementById("confirmDelete").addEventListener("click", async () => {
     if (!pendingDeleteId) return;
+
+    let databaseUpdated = true;
+    try {
+        await PubAPI.orders.remove(pendingDeleteId);
+    } catch (error) {
+        databaseUpdated = false;
+        console.warn("Order was deleted only from the browser cache.", error);
+    }
 
     orders = orders.filter((order) => order.id !== pendingDeleteId);
     saveOrders();
     renderOrders();
     closeModal(elements.deleteModal);
-    showToast(`${pendingDeleteId} was deleted`);
+    showToast(databaseUpdated
+        ? `${pendingDeleteId} was deleted`
+        : `${pendingDeleteId} was removed from this browser only`);
     pendingDeleteId = null;
 });
 
-document.getElementById("saveStatus").addEventListener("click", () => {
+document.getElementById("saveStatus").addEventListener("click", async () => {
     const order = orders.find((item) => item.id === activeOrderId);
     if (!order) return;
 
     order.status = elements.modalStatus.value;
+    let databaseUpdated = true;
+    try {
+        const updatedOrder = await PubAPI.orders.updateStatus(order.id, order.status);
+        Object.assign(order, normalizeOrder(updatedOrder));
+    } catch (error) {
+        databaseUpdated = false;
+        console.warn("Status was updated only in the browser cache.", error);
+    }
     saveOrders();
     renderOrders();
     closeModal(elements.orderModal);
-    showToast(`${order.id} updated to ${order.status}`);
+    showToast(databaseUpdated
+        ? `${order.id} updated to ${order.status}`
+        : `${order.id} updated only in this browser`);
 });
 
 document.getElementById("printOrder").addEventListener("click", () => window.print());
 
-elements.refreshButton.addEventListener("click", () => {
+elements.refreshButton.addEventListener("click", async () => {
     elements.refreshButton.classList.add("loading");
-    orders = loadOrders();
-    window.setTimeout(() => {
+    const loaded = await refreshOrdersFromApi(false);
+    if (!loaded) {
+        orders = loadOrders();
         renderOrders();
-        elements.refreshButton.classList.remove("loading");
-        showToast("Orders refreshed");
-    }, 450);
+    }
+    elements.refreshButton.classList.remove("loading");
+    showToast(loaded ? "Orders refreshed from the database" : "Cached orders refreshed");
 });
 
 // Update the table when checkout/order-confirmation saves an order in
@@ -549,10 +585,12 @@ window.addEventListener("storage", (event) => {
     showToast("A new order was received");
 });
 
-window.addEventListener("focus", () => {
-    const refreshedOrders = loadOrders();
-    if (JSON.stringify(refreshedOrders) !== JSON.stringify(orders)) {
-        orders = refreshedOrders;
+window.addEventListener("focus", async () => {
+    const loaded = await refreshOrdersFromApi(false);
+    if (loaded) return;
+    const cachedOrders = loadOrders();
+    if (JSON.stringify(cachedOrders) !== JSON.stringify(orders)) {
+        orders = cachedOrders;
         renderOrders();
     }
 });
@@ -571,3 +609,4 @@ document.getElementById("currentDate").textContent = new Intl.DateTimeFormat("en
 }).format(new Date());
 
 renderOrders();
+refreshOrdersFromApi(false);

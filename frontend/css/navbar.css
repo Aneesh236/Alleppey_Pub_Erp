@@ -51,8 +51,6 @@ background:#0b0b0b;
     box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
 }
 
-
-
 @media (max-width: 600px) {
     .customer-back-area {
         padding: 12px 18px 0;
@@ -63,52 +61,6 @@ background:#0b0b0b;
         font-size: 14px;
     }
 }
-
-.brand-logo-wrapper {
-    
-    width: 105px;
-    height: 105px;
-
-    margin: 0 auto 14px;
-
-    position: relative;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.brand-logo-glow {
-
-    position: absolute;
-    inset: 5px;
-
-    background: rgba(212, 175, 55, 0.25);
-
-    border-radius: 50%;
-
-    filter: blur(20px);
-
-    animation: logoGlow 2s ease-in-out infinite alternate;
-}
-
-.brand-logo {
-    width: 65px;
-    height: 65px;
-
-    position: relative;
-    z-index: 2;
-
-    object-fit: cover;
-
-    border: 2px solid rgba(212, 175, 55, 0.55);
-    border-radius: 50%;
-
-    box-shadow:
-        0 0 0 7px rgba(212, 175, 55, 0.06),
-        0 12px 28px rgba(0, 0, 0, 0.55);
-}
-
 
 nav{
 

@@ -3,7 +3,8 @@
    ORDER CONFIRMATION
 ========================================= */
 
-const LAST_ORDER_KEY = "lastOrder";
+// checkout.js stores the database-confirmed order under this key.
+const LAST_ORDER_KEY = "latestOrder";
 const ORDER_STORAGE_KEY = "pubOrders";
 const CART_STORAGE_KEY = "pubCart";
 

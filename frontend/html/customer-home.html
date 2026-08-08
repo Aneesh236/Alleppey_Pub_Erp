@@ -38,11 +38,19 @@
             <span>Back</span>
         </button>
 
-        <a href="#home" aria-label="Alleppey Pub home">
+        <a href="#home" class="brand-link" aria-label="Alleppey Pub home">
             <img src="../img/logo.jpeg" class="brand-logo" alt="Alleppey Pub and Bar logo">
         </a>
 
-       
+        <button
+            class="mobile-menu-btn"
+            id="mobileMenuBtn"
+            type="button"
+            aria-label="Open navigation menu"
+            aria-controls="customerNavLinks"
+            aria-expanded="false">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
         <ul id="customerNavLinks" class="nav-links">
             <li><a href="#home" class="active">Home</a></li>
@@ -196,95 +204,53 @@
         <div class="content-row">
             <div class="left-content">
                 <section class="categories" aria-labelledby="categoryTitle">
-                    <div class="section-title section-title-split">
-                        <div>
-                            <span class="eyebrow">BROWSE BY TASTE</span>
-                            <h2 id="categoryTitle">Find Your Favourite</h2>
-                            <p>From crisp pours to comfort food, there is something for every mood.</p>
-                        </div>
-
-                        <a href="menu.html" class="section-action">
-                            View all menu
-                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                        </a>
+                    <div class="section-title">
+                        <span class="eyebrow">BROWSE BY TASTE</span>
+                        <h2 id="categoryTitle">Featured Categories</h2>
+                        <p>Choose a category and jump directly to matching menu items.</p>
                     </div>
 
                     <div class="category-grid">
-                        <a href="menu.html?category=Beer" class="category-card category-card-featured">
-                            <span class="category-index">01</span>
-                            <div class="category-icon"><span>🍺</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">3 refreshing choices</span>
-                                <h3>Beer</h3>
-                                <p>Crisp, cold and poured perfectly.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <a href="menu.html?category=Beer" class="category-card">
+                            <div class="category-icon">🍺</div>
+                            <h3>Beer</h3>
+                            <p>Chilled premium beers</p>
                         </a>
 
                         <a href="menu.html?category=Cocktails" class="category-card">
-                            <span class="category-index">02</span>
-                            <div class="category-icon"><span>🍹</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">2 signature mixes</span>
-                                <h3>Cocktails</h3>
-                                <p>Bright, balanced and made to order.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                            <div class="category-icon">🍹</div>
+                            <h3>Cocktails</h3>
+                            <p>Signature mixes</p>
                         </a>
 
                         <a href="menu.html?category=Whisky" class="category-card">
-                            <span class="category-index">03</span>
-                            <div class="category-icon"><span>🥃</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">Premium pours</span>
-                                <h3>Whisky</h3>
-                                <p>Smooth selections for slow evenings.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                            <div class="category-icon">🥃</div>
+                            <h3>Whisky</h3>
+                            <p>Premium selections</p>
                         </a>
 
                         <a href="menu.html?category=Wine" class="category-card">
-                            <span class="category-index">04</span>
-                            <div class="category-icon"><span>🍷</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">House collection</span>
-                                <h3>Wine</h3>
-                                <p>Elegant glasses for every occasion.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                            <div class="category-icon">🍷</div>
+                            <h3>Wine</h3>
+                            <p>Imported favourites</p>
                         </a>
 
-                        <a href="menu.html?category=Food" class="category-card category-card-featured">
-                            <span class="category-index">05</span>
-                            <div class="category-icon"><span>🍔</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">3 pub favourites</span>
-                                <h3>Food</h3>
-                                <p>Fresh, filling and full of flavour.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        <a href="menu.html?category=Food" class="category-card">
+                            <div class="category-icon">🍔</div>
+                            <h3>Food</h3>
+                            <p>Fresh pub classics</p>
                         </a>
 
                         <a href="menu.html?category=Snacks" class="category-card">
-                            <span class="category-index">06</span>
-                            <div class="category-icon"><span>🍟</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">Quick bites</span>
-                                <h3>Snacks</h3>
-                                <p>Shareable bites that pair with a pint.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                            <div class="category-icon">🍟</div>
+                            <h3>Snacks</h3>
+                            <p>Perfect with drinks</p>
                         </a>
 
                         <a href="menu.html?category=Desserts" class="category-card">
-                            <span class="category-index">07</span>
-                            <div class="category-icon"><span>🍰</span></div>
-                            <div class="category-copy">
-                                <span class="category-count">Sweet finish</span>
-                                <h3>Desserts</h3>
-                                <p>Warm, indulgent and worth saving room for.</p>
-                            </div>
-                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                            <div class="category-icon">🍰</div>
+                            <h3>Desserts</h3>
+                            <p>Sweet endings</p>
                         </a>
                     </div>
                 </section>
@@ -292,28 +258,24 @@
 
             <div class="right-content">
                 <section class="happy-hours" id="offers" aria-labelledby="offerTitle">
-                    <div class="offer-visual">
-                        <img src="../img/happy.jpeg" alt="Cocktails served during happy hour">
-                        <span class="discount-orb"><small>SAVE</small>20%</span>
-                        <span class="offer-live"><i class="fa-solid fa-bolt"></i> Daily deal</span>
-                    </div>
-
                     <div class="offer-content">
-                        <span class="offer-tag">ALLEPPEY GOLDEN HOURS</span>
-                        <h2 id="offerTitle">Make the evening count.</h2>
-                        <p>Enjoy 20% off selected beers and handcrafted cocktails.</p>
+                        <span class="offer-tag">🍹 HAPPY HOURS</span>
+                        <h2 id="offerTitle">20% OFF</h2>
+                        <p>On selected drinks</p>
 
                         <div class="offer-time">
-                            <span><i class="fa-regular fa-clock"></i> 4 PM – 8 PM</span>
-                            <span><i class="fa-regular fa-calendar"></i> Every day</span>
+                            <span>🕓 4 PM – 8 PM</span>
+                            <span>Every day</span>
                         </div>
 
                         <a href="menu.html?category=Cocktails" class="offer-link">
-                            Explore happy-hour drinks
+                            See eligible drinks
                             <i class="fa-solid fa-arrow-right"></i>
                         </a>
+                    </div>
 
-                        <small class="offer-terms">Dine-in only • Selected drinks • Subject to availability</small>
+                    <div class="offer-image">
+                        <img src="../img/happy.jpeg" alt="Happy hour cocktail offer">
                     </div>
                 </section>
             </div>
@@ -324,43 +286,28 @@
         <div class="content-row">
             <div class="left-content">
                 <section class="featured-items" aria-labelledby="featuredTitle">
-                    <div class="section-title section-title-split">
-                        <div>
-                            <span class="eyebrow">CUSTOMER FAVOURITES</span>
-                            <h2 id="featuredTitle">Popular Right Now</h2>
-                            <p>Three pub favourites chosen for flavour, quality and repeat orders.</p>
-                        </div>
-
-                        <a href="menu.html" class="section-action">
-                            Explore full menu
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </a>
+                    <div class="section-title">
+                        <span class="eyebrow">CUSTOMER FAVOURITES</span>
+                        <h2 id="featuredTitle">Featured Menu</h2>
+                        <p>Add a popular item now or view its complete menu category.</p>
                     </div>
 
                     <div class="items-grid">
                         <article class="item-card">
                             <a href="menu.html?category=Beer" class="item-image">
                                 <img src="../img/lager.jpeg" alt="Lager Beer">
-                                <span class="item-badge"><i class="fa-solid fa-fire"></i> Best seller</span>
-                                <span class="item-view">View details <i class="fa-solid fa-arrow-right"></i></span>
                             </a>
 
                             <div class="item-content">
-                                <div class="item-meta">
-                                    <span class="category">Beer</span>
-                                    <span class="rating"><i class="fa-solid fa-star"></i> 4.9 <small>(241)</small></span>
-                                </div>
+                                <span class="category">Beer</span>
                                 <h3>Lager Beer</h3>
+                                <div class="rating">★★★★★ <span>(4.9)</span></div>
                                 <p>Fresh chilled premium lager served with crispy snacks.</p>
-                                <div class="item-tags">
-                                    <span><i class="fa-solid fa-snowflake"></i> Chilled</span>
-                                    <span>330 ml</span>
-                                </div>
 
                                 <div class="bottom">
-                                    <div class="item-price"><small>From</small><h4>₹220</h4></div>
+                                    <h4>₹220</h4>
                                     <button type="button" class="home-add-btn" data-product="lager">
-                                        <i class="fa-solid fa-plus"></i> Add
+                                        Add
                                     </button>
                                 </div>
                             </div>
@@ -369,26 +316,18 @@
                         <article class="item-card">
                             <a href="menu.html?category=Cocktails" class="item-image">
                                 <img src="../img/mojito.jpeg" alt="Mojito">
-                                <span class="item-badge item-badge-fresh"><i class="fa-solid fa-leaf"></i> Fresh pick</span>
-                                <span class="item-view">View details <i class="fa-solid fa-arrow-right"></i></span>
                             </a>
 
                             <div class="item-content">
-                                <div class="item-meta">
-                                    <span class="category">Cocktail</span>
-                                    <span class="rating"><i class="fa-solid fa-star"></i> 4.8 <small>(190)</small></span>
-                                </div>
+                                <span class="category">Cocktail</span>
                                 <h3>Mojito</h3>
+                                <div class="rating">★★★★★ <span>(4.8)</span></div>
                                 <p>Refreshing mint, lime and soda with a premium blend.</p>
-                                <div class="item-tags">
-                                    <span><i class="fa-solid fa-leaf"></i> Mint</span>
-                                    <span>250 ml</span>
-                                </div>
 
                                 <div class="bottom">
-                                    <div class="item-price"><small>From</small><h4>₹350</h4></div>
+                                    <h4>₹350</h4>
                                     <button type="button" class="home-add-btn" data-product="mojito">
-                                        <i class="fa-solid fa-plus"></i> Add
+                                        Add
                                     </button>
                                 </div>
                             </div>
@@ -397,26 +336,18 @@
                         <article class="item-card">
                             <a href="menu.html?category=Food" class="item-image">
                                 <img src="../img/burger.jpeg" alt="Pub Burger">
-                                <span class="item-badge item-badge-chef"><i class="fa-solid fa-award"></i> Chef's pick</span>
-                                <span class="item-view">View details <i class="fa-solid fa-arrow-right"></i></span>
                             </a>
 
                             <div class="item-content">
-                                <div class="item-meta">
-                                    <span class="category">Food</span>
-                                    <span class="rating"><i class="fa-solid fa-star"></i> 5.0 <small>(312)</small></span>
-                                </div>
+                                <span class="category">Food</span>
                                 <h3>Pub Burger</h3>
+                                <div class="rating">★★★★★ <span>(5.0)</span></div>
                                 <p>Juicy grilled burger with fries, fresh lettuce and cheese.</p>
-                                <div class="item-tags">
-                                    <span><i class="fa-solid fa-utensils"></i> With fries</span>
-                                    <span>450 g</span>
-                                </div>
 
                                 <div class="bottom">
-                                    <div class="item-price"><small>From</small><h4>₹420</h4></div>
+                                    <h4>₹420</h4>
                                     <button type="button" class="home-add-btn" data-product="burger">
-                                        <i class="fa-solid fa-plus"></i> Add
+                                        Add
                                     </button>
                                 </div>
                             </div>
@@ -428,48 +359,33 @@
             <div class="right-side">
                 <section class="sticky-card specials" aria-labelledby="specialTitle">
                     <div class="special-header">
-                        <div class="special-title-wrap">
-                            <span class="special-icon"><i class="fa-solid fa-cloche"></i></span>
-                            <div>
-                                <span class="special-kicker">LIMITED PLATES</span>
-                                <h3 id="specialTitle">Today's Specials</h3>
-                            </div>
-                        </div>
-                        <span class="special-status"><i class="fa-solid fa-circle"></i> Serving now</span>
+                        <h3 id="specialTitle">🔥 Today's Specials</h3>
+                        <span>Chef's Choice</span>
                     </div>
 
                     <div class="special-list">
                         <a href="menu.html?category=Food" class="special-item">
-                            <span class="special-number">01</span>
                             <img src="../img/grill.jpeg" alt="Grilled Chicken">
-                            <div class="special-copy">
+                            <div>
                                 <h4>Grilled Chicken</h4>
-                                <span>Smoky • Tender • House sauce</span>
+                                <p>₹460</p>
                             </div>
-                            <strong>₹460</strong>
-                            <i class="fa-solid fa-chevron-right special-arrow"></i>
                         </a>
 
                         <a href="menu.html?category=Cocktails" class="special-item">
-                            <span class="special-number">02</span>
                             <img src="../img/margarita.jpeg" alt="Margarita">
-                            <div class="special-copy">
+                            <div>
                                 <h4>Margarita</h4>
-                                <span>Citrus • Salt rim • Chilled</span>
+                                <p>₹380</p>
                             </div>
-                            <strong>₹380</strong>
-                            <i class="fa-solid fa-chevron-right special-arrow"></i>
                         </a>
 
                         <a href="menu.html?category=Food" class="special-item">
-                            <span class="special-number">03</span>
                             <img src="../img/wings.jpeg" alt="Chicken Wings">
-                            <div class="special-copy">
+                            <div>
                                 <h4>Chicken Wings</h4>
-                                <span>Crispy • Spicy • Shareable</span>
+                                <p>₹390</p>
                             </div>
-                            <strong>₹390</strong>
-                            <i class="fa-solid fa-chevron-right special-arrow"></i>
                         </a>
                     </div>
 
@@ -477,11 +393,8 @@
                         class="special-btn"
                         type="button"
                         onclick="window.location.href='menu.html'">
-                        View today's full menu
-                        <i class="fa-solid fa-arrow-right"></i>
+                        View Full Menu
                     </button>
-
-                    <p class="special-note"><i class="fa-regular fa-clock"></i> Available while today's stock lasts</p>
                 </section>
             </div>
         </div>
@@ -705,6 +618,7 @@
 
     <div class="home-toast" id="homeToast" role="status" aria-live="polite"></div>
 
+    <script src="../js/config.js"></script>
     <script src="../js/navbar.js"></script>
     <script src="../js/customer-ai.js"></script>
 </body>

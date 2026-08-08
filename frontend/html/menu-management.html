@@ -2,297 +2,235 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Manage menu items for Alleppey Pub & Bar">
 
     <title>Menu Management | Alleppey PUB ERP</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="../css/menu-management.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
 </head>
 
 <body>
+
+<div class="container">
+
+    <!-- ===========================
+         HEADER
+    ============================ -->
+
     <header class="top-bar">
-        <div class="brand-group">
-            <button class="icon-button" id="backButton" type="button" aria-label="Return to dashboard">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
 
-            <div class="brand-mark" aria-hidden="true">
-                <i class="fa-solid fa-utensils"></i>
-            </div>
+        <button class="back-btn" onclick="window.location.href='../html/admin-dashboard.html'">
+            <i class="fa-solid fa-arrow-left"></i> Dashboard
+        </button>
 
-            <div>
-                <p class="eyebrow">ALLEPPEY PUB &amp; BAR</p>
-                <h1>Menu Management</h1>
-            </div>
-        </div>
+        <h1>MENU MANAGEMENT</h1>
 
-        <div class="header-actions">
-            <span class="live-status"><i></i> Menu is live</span>
-            <button class="primary-button" id="openModal" type="button">
-                <i class="fa-solid fa-plus"></i>
-                <span>Add Menu Item</span>
-            </button>
-        </div>
+        <button class="add-btn" id="openModal">
+            <i class="fa-solid fa-plus"></i> Add Item
+        </button>
+
     </header>
 
-    <main class="page-content">
-        <section class="hero-row">
-            <div>
-                <p class="section-label">MENU CONTROL CENTRE</p>
-                <h2>Keep your menu fresh, accurate and ready to serve.</h2>
-                <p>Manage item details, pricing, availability and categories from one place.</p>
-            </div>
+    <!-- ===========================
+         SEARCH & FILTER
+    ============================ -->
 
-            <div class="date-chip">
-                <i class="fa-regular fa-calendar"></i>
-                <span id="currentDate">Today</span>
-            </div>
-        </section>
+    <section class="toolbar">
 
-        <section class="stats-grid" aria-label="Menu summary">
-            <article class="stat-card stat-total">
-                <span class="stat-icon"><i class="fa-solid fa-list"></i></span>
-                <div>
-                    <p>Total Items</p>
-                    <strong id="totalItems">0</strong>
-                    <small>Across all categories</small>
-                </div>
-            </article>
+        <div class="search-box">
 
-            <article class="stat-card stat-available">
-                <span class="stat-icon"><i class="fa-solid fa-circle-check"></i></span>
-                <div>
-                    <p>Available</p>
-                    <strong id="availableItems">0</strong>
-                    <small>Ready to order</small>
-                </div>
-            </article>
+            <i class="fa-solid fa-magnifying-glass"></i>
 
-            <article class="stat-card stat-stock">
-                <span class="stat-icon"><i class="fa-solid fa-box-open"></i></span>
-                <div>
-                    <p>Out of Stock</p>
-                    <strong id="outOfStockItems">0</strong>
-                    <small>Needs attention</small>
-                </div>
-            </article>
+            <input
+                type="text"
+                id="searchInput"
+                placeholder="Search menu item...">
 
-            <article class="stat-card stat-price">
-                <span class="stat-icon"><i class="fa-solid fa-sterling-sign"></i></span>
-                <div>
-                    <p>Average Price</p>
-                    <strong id="averagePrice">£0.00</strong>
-                    <small>Current menu average</small>
-                </div>
-            </article>
-        </section>
+        </div>
 
-        <section class="menu-panel">
-            <div class="panel-heading">
-                <div>
-                    <p class="section-label">MENU CATALOGUE</p>
-                    <h2>All Menu Items</h2>
-                </div>
-                <span class="result-count" id="resultCount">0 items</span>
-            </div>
+        <select id="categoryFilter">
 
-            <div class="toolbar">
-                <label class="search-control" for="searchInput">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="search" id="searchInput" placeholder="Search name or description…" autocomplete="off">
-                    <button id="clearSearch" type="button" aria-label="Clear search">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </label>
+            <option value="All">All Categories</option>
+            <option value="Beer">Beer</option>
+            <option value="Cocktails">Cocktails</option>
+            <option value="Whisky">Whisky</option>
+            <option value="Wine">Wine</option>
+            <option value="Food">Food</option>
+            <option value="Snacks">Snacks</option>
+            <option value="Desserts">Desserts</option>
 
-                <label class="select-control">
-                    <i class="fa-solid fa-layer-group"></i>
-                    <span class="sr-only">Filter by category</span>
-                    <select id="categoryFilter">
-                        <option value="All">All categories</option>
-                        <option value="Beer">Beer</option>
-                        <option value="Cocktail">Cocktail</option>
-                        <option value="Whisky">Whisky</option>
-                        <option value="Wine">Wine</option>
-                        <option value="Food">Food</option>
-                        <option value="Dessert">Dessert</option>
-                    </select>
-                </label>
+        </select>
 
-                <label class="select-control">
-                    <i class="fa-solid fa-toggle-on"></i>
-                    <span class="sr-only">Filter by status</span>
-                    <select id="statusFilter">
-                        <option value="All">All statuses</option>
-                        <option value="Available">Available</option>
-                        <option value="Out of Stock">Out of stock</option>
-                        <option value="Hidden">Hidden</option>
-                    </select>
-                </label>
+    </section>
 
-                <label class="select-control sort-control">
-                    <i class="fa-solid fa-arrow-down-wide-short"></i>
-                    <span class="sr-only">Sort menu</span>
-                    <select id="sortMenu">
-                        <option value="name-asc">Name A–Z</option>
-                        <option value="name-desc">Name Z–A</option>
-                        <option value="price-high">Price: high to low</option>
-                        <option value="price-low">Price: low to high</option>
-                        <option value="newest">Recently added</option>
-                    </select>
-                </label>
-            </div>
+    <!-- ===========================
+         MENU TABLE
+    ============================ -->
 
-            <div class="filter-summary" id="filterSummary" hidden>
-                <span id="filterSummaryText"></span>
-                <button id="resetFilters" type="button">Clear filters</button>
-            </div>
+    <div class="table-container">
 
-            <div class="table-container">
-                <table id="menuTable">
-                    <thead>
-                        <tr>
-                            <th scope="col">Item</th>
-                            <th scope="col">Description</th>
-                            <th scope="col">Category</th>
-                            <th scope="col">Price</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="actions-heading">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="menuTableBody"></tbody>
-                </table>
+        <table>
 
-                <div class="empty-state" id="emptyState" hidden>
-                    <span class="empty-icon"><i class="fa-solid fa-bowl-food"></i></span>
-                    <h3>No menu items found</h3>
-                    <p>Adjust the filters or add a new item to your menu.</p>
-                    <button id="emptyAction" type="button">Show all items</button>
-                </div>
-            </div>
-        </section>
-    </main>
+            <thead>
 
-    <div class="modal" id="menuModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
-        <div class="modal-backdrop" data-close="menu"></div>
-        <section class="modal-card">
-            <header class="modal-header">
-                <div>
-                    <p class="section-label" id="modalMode">NEW MENU ITEM</p>
-                    <h2 id="modalTitle">Add Menu Item</h2>
-                </div>
-                <button class="modal-close" id="closeModal" type="button" aria-label="Close form">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </header>
+                <tr>
 
-            <form id="menuForm" novalidate>
-                <div class="modal-body">
-                    <div class="image-preview-card">
-                        <div class="image-preview" id="imagePreview">
-                            <img id="previewImage" alt="Menu item preview" hidden>
-                            <span id="previewPlaceholder"><i class="fa-regular fa-image"></i></span>
-                        </div>
-                        <div>
-                            <strong>Item image</strong>
-                            <p>Use a local image path such as <code>../img/burger.jpeg</code> or paste an image URL.</p>
-                        </div>
-                    </div>
+                    <th>Image</th>
 
-                    <div class="form-grid">
-                        <label class="form-group form-wide">
-                            <span>Image path or URL</span>
-                            <div class="input-with-icon">
-                                <i class="fa-solid fa-link"></i>
-                                <input type="text" id="itemImage" placeholder="../img/menu-item.jpeg">
-                            </div>
-                        </label>
+                    <th>Name</th>
 
-                        <label class="form-group form-wide">
-                            <span>Item name <b>*</b></span>
-                            <div class="input-with-icon">
-                                <i class="fa-solid fa-burger"></i>
-                                <input type="text" id="itemName" maxlength="60" placeholder="Enter item name" required>
-                            </div>
-                            <small class="field-error" id="nameError"></small>
-                        </label>
+                    <th>Description</th>
 
-                        <label class="form-group form-wide">
-                            <span>Description</span>
-                            <textarea id="itemDescription" rows="3" maxlength="180" placeholder="Briefly describe the menu item"></textarea>
-                            <small class="character-count"><span id="descriptionCount">0</span>/180</small>
-                        </label>
+                    <th>Category</th>
 
-                        <label class="form-group">
-                            <span>Category <b>*</b></span>
-                            <select id="itemCategory" required>
-                                <option value="Beer">Beer</option>
-                                <option value="Cocktail">Cocktail</option>
-                                <option value="Whisky">Whisky</option>
-                                <option value="Wine">Wine</option>
-                                <option value="Food">Food</option>
-                                <option value="Dessert">Dessert</option>
-                            </select>
-                        </label>
+                    <th>Price (£)</th>
 
-                        <label class="form-group">
-                            <span>Price (£) <b>*</b></span>
-                            <div class="input-with-icon">
-                                <i class="fa-solid fa-sterling-sign"></i>
-                                <input type="number" id="itemPrice" min="0.01" max="9999" step="0.01" placeholder="0.00" required>
-                            </div>
-                            <small class="field-error" id="priceError"></small>
-                        </label>
+                    <th>Status</th>
 
-                        <label class="form-group form-wide">
-                            <span>Status</span>
-                            <select id="itemStatus">
-                                <option value="Available">Available</option>
-                                <option value="Out of Stock">Out of Stock</option>
-                                <option value="Hidden">Hidden</option>
-                            </select>
-                        </label>
-                    </div>
-                </div>
+                    <th>Actions</th>
 
-                <footer class="modal-footer">
-                    <button class="secondary-button" id="cancelForm" type="button">Cancel</button>
-                    <button class="primary-button" type="submit">
-                        <i class="fa-solid fa-check"></i>
-                        <span id="saveButtonText">Save Item</span>
-                    </button>
-                </footer>
-            </form>
-        </section>
+                </tr>
+
+            </thead>
+
+            <tbody id="menuTableBody">
+
+                <!-- JavaScript will insert rows here -->
+
+            </tbody>
+
+        </table>
+
     </div>
 
-    <div class="modal" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle" hidden>
-        <div class="modal-backdrop" data-close="delete"></div>
-        <section class="delete-card">
-            <span class="delete-icon"><i class="fa-regular fa-trash-can"></i></span>
-            <h2 id="deleteTitle">Delete this menu item?</h2>
-            <p><strong id="deleteItemName"></strong> will be permanently removed from the menu.</p>
-            <div class="delete-actions">
-                <button class="secondary-button" id="cancelDelete" type="button">Keep Item</button>
-                <button class="danger-button" id="confirmDelete" type="button">
-                    <i class="fa-solid fa-trash"></i> Delete Item
-                </button>
+</div>
+
+<!-- ======================================
+     ADD / EDIT MENU ITEM MODAL
+======================================= -->
+
+<div class="modal" id="menuModal">
+
+    <div class="modal-content">
+
+        <span class="close-btn" id="closeModal">&times;</span>
+
+        <h2>Add Menu Item</h2>
+
+        <form id="menuForm">
+
+            <div class="form-group">
+
+                <label>Image URL</label>
+
+                <input
+                    type="text"
+                    id="itemImage"
+                    placeholder="Enter image URL">
+
             </div>
-        </section>
+
+            <div class="form-group">
+
+                <label>Item Name</label>
+
+                <input
+                    type="text"
+                    id="itemName"
+                    placeholder="Enter item name"
+                    required>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Description</label>
+
+                <textarea
+                    id="itemDescription"
+                    rows="3"
+                    placeholder="Enter description"></textarea>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Category</label>
+
+                <select id="itemCategory">
+
+                    <option>Beer</option>
+
+                    <option>Cocktails</option>
+
+                    <option>Whisky</option>
+
+                    <option>Wine</option>
+
+                    <option>Food</option>
+
+                    <option>Snacks</option>
+
+                    <option>Desserts</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Price (£)</label>
+
+                <input
+                    type="number"
+                    id="itemPrice"
+                    step="0.01"
+                    required>
+
+            </div>
+
+            <div class="form-group">
+
+                <label>Status</label>
+
+                <select id="itemStatus">
+
+                    <option>Available</option>
+
+                    <option>Out of Stock</option>
+
+                    <option>Hidden</option>
+
+                </select>
+
+            </div>
+
+            <button
+                type="submit"
+                class="save-btn">
+
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save Item
+
+            </button>
+
+        </form>
+
     </div>
 
-    <div class="toast" id="toast" role="status" aria-live="polite">
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="toastMessage">Menu updated</span>
-    </div>
+</div>
 
-    <script src="../js/menu-management.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/api-client.js"></script>
+<script src="../js/menu-management.js"></script>
+
 </body>
 
 </html>
