@@ -110,6 +110,57 @@ class OrderItem(Base):
     order: Mapped[Order] = relationship(back_populates="items")
 
 
+class Bill(Base):
+    __tablename__ = "bills"
+
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    order_id: Mapped[str] = mapped_column(
+        String(40), unique=True, index=True
+    )
+    customer: Mapped[str] = mapped_column(
+        String(120), default="Walk-in Customer"
+    )
+    table: Mapped[str] = mapped_column(String(40), default="Takeaway")
+    order_type: Mapped[str] = mapped_column(String(40), default="Dine In")
+    subtotal: Mapped[float] = mapped_column(Float, default=0)
+    discount: Mapped[float] = mapped_column(Float, default=0)
+    gst: Mapped[float] = mapped_column(Float, default=0)
+    service_charge: Mapped[float] = mapped_column(Float, default=0)
+    total: Mapped[float] = mapped_column(Float, default=0)
+    payment_method: Mapped[str] = mapped_column(String(40), default="Cash")
+    payment_status: Mapped[str] = mapped_column(
+        String(40), default="Pending", index=True
+    )
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+    items: Mapped[list["BillItem"]] = relationship(
+        back_populates="bill",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+
+class BillItem(Base):
+    __tablename__ = "bill_items"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    bill_id: Mapped[str] = mapped_column(
+        ForeignKey("bills.id", ondelete="CASCADE"), index=True
+    )
+    source_item_id: Mapped[str] = mapped_column(String(40), default="")
+    name: Mapped[str] = mapped_column(String(120), default="Billing Item")
+    price: Mapped[float] = mapped_column(Float, default=0)
+    quantity: Mapped[float] = mapped_column(Float, default=1)
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+    bill: Mapped[Bill] = relationship(back_populates="items")
+
+
 MENU_SEED = [
     (1, "../img/lager.jpeg", "Lager Beer", "Crisp premium lager served chilled.", "Beer", 220, "Available"),
     (2, "../img/mojito.jpeg", "Mojito", "Fresh mint, lime and soda.", "Cocktails", 350, "Available"),
@@ -189,4 +240,3 @@ def init_database() -> None:
                 ]
             )
         session.commit()
-

@@ -61,3 +61,29 @@ class OrderPayload(BaseModel):
 class OrderStatusPayload(BaseModel):
     status: str = Field(min_length=1, max_length=40)
 
+
+class BillItemPayload(BaseModel):
+    id: Any = None
+    name: str = Field(default="Billing Item", min_length=1, max_length=120)
+    price: float = Field(default=0, ge=0)
+    quantity: float = Field(default=1, gt=0)
+    qty: float | None = Field(default=None, gt=0)
+    notes: str = ""
+
+
+class BillPayload(BaseModel):
+    id: Any = None
+    orderId: str = Field(min_length=1, max_length=40)
+    customer: str = "Walk-in Customer"
+    table: Any = "Takeaway"
+    orderType: str = "Dine In"
+    items: list[BillItemPayload] = []
+    subtotal: float = Field(default=0, ge=0)
+    discount: float = Field(default=0, ge=0)
+    gst: float = Field(default=0, ge=0)
+    serviceCharge: float = Field(default=0, ge=0)
+    total: float = Field(default=0, ge=0)
+    paymentMethod: str = "Cash"
+    paymentStatus: str = Field(default="Pending", min_length=1, max_length=40)
+    notes: str = ""
+    createdAt: datetime | None = None

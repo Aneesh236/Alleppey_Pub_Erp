@@ -13,6 +13,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import (
+    Bill,
+    BillItem,
     InventoryItem,
     MenuItem,
     Order,
@@ -21,6 +23,7 @@ from database import (
     init_database,
 )
 from schemas import (
+    BillPayload,
     InventoryItemPayload,
     MenuItemPayload,
     OrderPayload,
@@ -37,7 +40,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="Alleppey Pub ERP API",
     description="Database, ordering, inventory and analytics API.",
-    version="3.0.0",
+    version="4.0.0",
     lifespan=lifespan,
 )
 
@@ -71,7 +74,7 @@ def text_value(*values: Any) -> str:
 
 
 def money(value: float) -> str:
-    return f"₹{value:,.0f}"
+    return f"â‚¹{value:,.0f}"
 
 
 def item_name(item: dict[str, Any]) -> str:
@@ -363,7 +366,7 @@ def customer_answer(question: str) -> str:
         for phrase in ("non-alcohol", "without alcohol", "mocktail", "virgin")
     ):
         return (
-            "Try a Virgin Mojito—lime, mint, sugar and soda, with no alcohol. "
+            "Try a Virgin Mojitoâ€”lime, mint, sugar and soda, with no alcohol. "
             "Ask the team about today's fresh mocktail options too."
         )
     if any(
@@ -387,22 +390,22 @@ def customer_answer(question: str) -> str:
         for word in ("cocktail", "mojito", "margarita")
     ):
         return (
-            "For something fresh, choose the Mojito (₹280). For a stronger "
-            "citrus profile, try the Margarita (₹350)."
+            "For something fresh, choose the Mojito (â‚¹280). For a stronger "
+            "citrus profile, try the Margarita (â‚¹350)."
         )
     if "beer" in query or "lager" in query:
         return (
-            "I recommend the Lager Beer (₹220): crisp, refreshing, and an easy "
+            "I recommend the Lager Beer (â‚¹220): crisp, refreshing, and an easy "
             "match with Chicken Wings or the Pub Burger."
         )
     if "spicy" in query or "wing" in query:
         return (
-            "Choose the Chicken Wings (₹320). They are the spicy snack pick and "
+            "Choose the Chicken Wings (â‚¹320). They are the spicy snack pick and "
             "pair especially well with a cold Lager Beer."
         )
     if any(word in query for word in ("burger", "filling", "hungry")):
         return (
-            "The Pub Burger (₹420) is the most filling choice. Pair it with "
+            "The Pub Burger (â‚¹420) is the most filling choice. Pair it with "
             "Lager Beer, or a Mojito for something fresh."
         )
     if "vegetarian" in query or "veg" in query:
@@ -420,34 +423,34 @@ def customer_answer(question: str) -> str:
         ("Pub Burger", 420),
     ]
     budget_match = re.search(
-        r"(?:under|below|within|budget)\s*₹?\s*(\d+)",
+        r"(?:under|below|within|budget)\s*â‚¹?\s*(\d+)",
         query,
     )
     if budget_match:
         budget = int(budget_match.group(1))
         choices = [
-            f"{name} (₹{price})"
+            f"{name} (â‚¹{price})"
             for name, price in menu
             if price <= budget
         ]
         return (
-            f"Within ₹{budget}, you can choose {', '.join(choices)}."
+            f"Within â‚¹{budget}, you can choose {', '.join(choices)}."
             if choices
             else (
-                f"I do not have a listed item below ₹{budget}. "
+                f"I do not have a listed item below â‚¹{budget}. "
                 "Ask the team about small snacks or current offers."
             )
         )
     if "price" in query or "cost" in query or "menu" in query:
         return (
-            "Popular prices: Lager Beer ₹220, Mojito ₹280, Chicken Wings ₹320, "
-            "Margarita ₹350, Grilled Chicken ₹380, and Pub Burger ₹420."
+            "Popular prices: Lager Beer â‚¹220, Mojito â‚¹280, Chicken Wings â‚¹320, "
+            "Margarita â‚¹350, Grilled Chicken â‚¹380, and Pub Burger â‚¹420."
         )
 
     return (
         "I can help with beer and cocktail recommendations, food pairings, "
         "prices, dietary choices, and today's specials. Try asking "
-        "'What can I get under ₹350?'"
+        "'What can I get under â‚¹350?'"
     )
 
 
@@ -506,7 +509,7 @@ def serialize_order(order: Order) -> dict[str, Any]:
         "phone": order.phone,
         "table": order.table,
         "type": (
-            f"Dine-in · Table {order.table}"
+            f"Dine-in Â· Table {order.table}"
             if order.order_type.lower().startswith("dine")
             else order.order_type
         ),
@@ -535,6 +538,37 @@ def serialize_order(order: Order) -> dict[str, Any]:
         "notes": order.notes,
         "status": order.status,
         "date": created_at.isoformat(),
+        "createdAt": created_at.isoformat(),
+    }
+
+
+def serialize_bill(bill: Bill) -> dict[str, Any]:
+    created_at = bill.created_at or datetime.now(timezone.utc)
+    return {
+        "id": bill.id,
+        "orderId": bill.order_id,
+        "customer": bill.customer,
+        "table": bill.table,
+        "orderType": bill.order_type,
+        "items": [
+            {
+                "id": item.source_item_id or item.id,
+                "name": item.name,
+                "price": item.price,
+                "quantity": item.quantity,
+                "qty": item.quantity,
+                "notes": item.notes,
+            }
+            for item in bill.items
+        ],
+        "subtotal": bill.subtotal,
+        "discount": bill.discount,
+        "gst": bill.gst,
+        "serviceCharge": bill.service_charge,
+        "total": bill.total,
+        "paymentMethod": bill.payment_method,
+        "paymentStatus": bill.payment_status,
+        "notes": bill.notes,
         "createdAt": created_at.isoformat(),
     }
 
@@ -742,6 +776,98 @@ def delete_order(order_id: str, db: Session = Depends(get_db)) -> Response:
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found.")
     db.delete(order)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+def generate_bill_id(db: Session, requested_id: Any = None) -> str:
+    if requested_id not in (None, ""):
+        candidate = str(requested_id).strip()
+        if candidate.isdigit():
+            candidate = f"BILL-{candidate}"
+        if db.get(Bill, candidate) is None:
+            return candidate
+
+    existing_ids = db.scalars(select(Bill.id)).all()
+    largest = 5000
+    for existing_id in existing_ids:
+        match = re.search(r"(\d+)$", existing_id)
+        if match:
+            largest = max(largest, int(match.group(1)))
+    return f"BILL-{largest + 1}"
+
+
+def apply_bill_payload(bill: Bill, payload: BillPayload) -> None:
+    bill.customer = payload.customer
+    bill.table = str(payload.table)
+    bill.order_type = payload.orderType
+    bill.subtotal = payload.subtotal
+    bill.discount = payload.discount
+    bill.gst = payload.gst
+    bill.service_charge = payload.serviceCharge
+    bill.total = payload.total
+    bill.payment_method = payload.paymentMethod
+    bill.payment_status = payload.paymentStatus
+    bill.notes = payload.notes
+    bill.items = [
+        BillItem(
+            source_item_id=str(item.id or ""),
+            name=item.name,
+            price=item.price,
+            quantity=item.qty or item.quantity,
+            notes=item.notes,
+        )
+        for item in payload.items
+    ]
+
+
+@app.get("/api/bills")
+def list_bills(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    bills = db.scalars(select(Bill).order_by(Bill.created_at.desc())).all()
+    return [serialize_bill(bill) for bill in bills]
+
+
+@app.get("/api/bills/{bill_id}")
+def get_bill(bill_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    bill = db.get(Bill, bill_id)
+    if bill is None:
+        raise HTTPException(status_code=404, detail="Bill not found.")
+    return serialize_bill(bill)
+
+
+@app.post("/api/bills")
+def save_bill(
+    payload: BillPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    order_id = payload.orderId.strip()
+    bill = db.scalar(select(Bill).where(Bill.order_id == order_id))
+
+    if bill is None:
+        bill = Bill(
+            id=generate_bill_id(db, payload.id),
+            order_id=order_id,
+            created_at=payload.createdAt or datetime.now(timezone.utc),
+        )
+        db.add(bill)
+
+    apply_bill_payload(bill, payload)
+
+    order = db.get(Order, order_id)
+    if order is not None and payload.paymentStatus.lower() == "paid":
+        order.status = "Completed"
+
+    commit_or_conflict(db, "A bill already exists for this order.")
+    db.refresh(bill)
+    return serialize_bill(bill)
+
+
+@app.delete("/api/bills/{bill_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_bill(bill_id: str, db: Session = Depends(get_db)) -> Response:
+    bill = db.get(Bill, bill_id)
+    if bill is None:
+        raise HTTPException(status_code=404, detail="Bill not found.")
+    db.delete(bill)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
