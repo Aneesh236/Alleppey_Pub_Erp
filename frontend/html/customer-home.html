@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Alleppey Pub &amp; Bar</title>
+
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link rel="stylesheet" href="../css/hero.css">
+    <link rel="stylesheet" href="../css/ai.css">
+    <link rel="stylesheet" href="../css/category.css">
+    <link rel="stylesheet" href="../css/item.css">
+    <link rel="stylesheet" href="../css/happyhour.css">
+    <link rel="stylesheet" href="../css/todays_special.css">
+    <link rel="stylesheet" href="../css/customer-home.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body id="home">
+
+    <nav class="customer-nav" aria-label="Customer navigation">
+        <button
+            class="customer-back-btn"
+            type="button"
+            onclick="window.location.href='role-selection.html'">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+
+        <!-- <a href="#home" class="brand-link" aria-label="Alleppey Pub home">
+            <img src="../img/logo.jpeg" class="brand-logo" alt="Alleppey Pub and Bar logo">
+        </a> -->
+
+     
+
+        <ul id="customerNavLinks" class="nav-links">
+            <li><a href="#home" class="active">Home</a></li>
+            <li><a href="menu.html">Menu</a></li>
+            <li><a href="#offers">Offers</a></li>
+            <li><a href="#events">Events</a></li>
+            <li><a href="#gallery">Gallery</a></li>
+            <li><a href="#reservations">Reservations</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+
+        <div class="right-icons">
+            <a
+                href="menu.html?focus=search"
+                class="icon"
+                aria-label="Search the menu"
+                title="Search menu">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </a>
+
+            <a href="cart.html" class="icon cart" aria-label="Open cart" title="My cart">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span id="navbarCartCount">0</span>
+            </a>
+
+            <span class="price" id="navbarCartTotal" title="Cart total">₹0</span>
+
+            <a
+                href="role-selection.html"
+                class="icon"
+                aria-label="Switch user role"
+                title="Switch role">
+                <i class="fa-regular fa-user"></i>
+            </a>
+        </div>
+    </nav>
+
+    <main class="home-layout">
+        <div class="content-row">
+            <div class="left-content">
+                <section class="hero" aria-labelledby="heroTitle">
+                    <div class="hero-content">
+                        <p class="welcome">WELCOME TO ALLEPPEY PUB &amp; BAR</p>
+
+                        <h1 id="heroTitle">
+                            GOOD TIMES <br>
+                            <span>GREAT DRINKS</span> <br>
+                            BEST MEMORIES
+                        </h1>
+
+                        <p class="description">
+                            Experience premium drinks, delicious food and unforgettable
+                            moments in the heart of Alleppey. Enjoy handcrafted cocktails,
+                            signature dishes and a warm atmosphere.
+                        </p>
+
+                        <div class="hero-buttons">
+                            <a href="menu.html" class="btn-primary">
+                                <i class="fa-solid fa-utensils"></i>
+                                Explore Menu
+                            </a>
+
+                            <a href="#offers" class="btn-secondary">
+                                <i class="fa-solid fa-tags"></i>
+                                View Offers
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="right-side">
+                <section class="sticky-card ai-section" aria-labelledby="aiTitle">
+                    <div class="ai-card">
+                        <div class="ai-header">
+                            <div class="robot">
+                                <i class="fa-solid fa-robot"></i>
+                            </div>
+
+                            <div>
+                                <h2 id="aiTitle">AI Pub Concierge</h2>
+                                <span>Online • Ready to Help</span>
+                            </div>
+                        </div>
+
+                        <p class="ai-text">
+                            Ask me anything! I can recommend drinks, suggest food pairings,
+                            explain ingredients or help you find today's best offers.
+                        </p>
+
+                        <div
+                            class="ai-messages"
+                            id="customerAiMessages"
+                            aria-live="polite">
+                            <div class="ai-message assistant-message">
+                                Hi! Tell me what you feel like eating or drinking, and I’ll suggest a good match.
+                            </div>
+                        </div>
+
+                        <div class="quick-buttons">
+                            <button
+                                class="customer-ai-prompt"
+                                type="button"
+                                data-question="Recommend a beer and a food pairing">
+                                🍺 Recommend Beer
+                            </button>
+
+                            <button
+                                class="customer-ai-prompt"
+                                type="button"
+                                data-question="Which cocktail should I try?">
+                                🍹 Cocktail Suggestion
+                            </button>
+
+                            <button
+                                class="customer-ai-prompt"
+                                type="button"
+                                data-question="Suggest a good food and drink pairing">
+                                🍔 Food Pairing
+                            </button>
+
+                            <button
+                                class="customer-ai-prompt"
+                                type="button"
+                                data-question="What are today's specials?">
+                                🔥 Today's Specials
+                            </button>
+                        </div>
+
+                        <div class="chat-box">
+                            <input
+                                type="text"
+                                id="customerAiInput"
+                                placeholder="Ask the AI Assistant..."
+                                aria-label="Question for AI assistant">
+
+                            <button
+                                id="customerAiSendBtn"
+                                type="button"
+                                aria-label="Send question">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="section-spacer"></div>
+
+        <div class="content-row">
+            <div class="left-content">
+                <section class="categories" aria-labelledby="categoryTitle">
+                    <div class="section-title section-title-split">
+                        <div>
+                            <span class="eyebrow">BROWSE BY TASTE</span>
+                            <h2 id="categoryTitle">Find Your Favourite</h2>
+                            <p>From crisp pours to comfort food, there is something for every mood.</p>
+                        </div>
+
+                        <a href="menu.html" class="section-action">
+                            View all menu
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+
+                    <div class="category-grid">
+                        <a href="menu.html?category=Beer" class="category-card category-card-featured">
+                            <span class="category-index">01</span>
+                            <div class="category-icon"><span>🍺</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">3 refreshing choices</span>
+                                <h3>Beer</h3>
+                                <p>Crisp, cold and poured perfectly.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+
+                        <a href="menu.html?category=Cocktails" class="category-card">
+                            <span class="category-index">02</span>
+                            <div class="category-icon"><span>🍹</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">2 signature mixes</span>
+                                <h3>Cocktails</h3>
+                                <p>Bright, balanced and made to order.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+
+                        <a href="menu.html?category=Whisky" class="category-card">
+                            <span class="category-index">03</span>
+                            <div class="category-icon"><span>🥃</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">Premium pours</span>
+                                <h3>Whisky</h3>
+                                <p>Smooth selections for slow evenings.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+
+                        <a href="menu.html?category=Wine" class="category-card">
+                            <span class="category-index">04</span>
+                            <div class="category-icon"><span>🍷</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">House collection</span>
+                                <h3>Wine</h3>
+                                <p>Elegant glasses for every occasion.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+
+                        <a href="menu.html?category=Food" class="category-card category-card-featured">
+                            <span class="category-index">05</span>
+                            <div class="category-icon"><span>🍔</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">3 pub favourites</span>
+                                <h3>Food</h3>
+                                <p>Fresh, filling and full of flavour.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+
+                        <a href="menu.html?category=Snacks" class="category-card">
+                            <span class="category-index">06</span>
+                            <div class="category-icon"><span>🍟</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">Quick bites</span>
+                                <h3>Snacks</h3>
+                                <p>Shareable bites that pair with a pint.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+
+                        <a href="menu.html?category=Desserts" class="category-card">
+                            <span class="category-index">07</span>
+                            <div class="category-icon"><span>🍰</span></div>
+                            <div class="category-copy">
+                                <span class="category-count">Sweet finish</span>
+                                <h3>Desserts</h3>
+                                <p>Warm, indulgent and worth saving room for.</p>
+                            </div>
+                            <span class="category-arrow"><i class="fa-solid fa-arrow-right"></i></span>
+                        </a>
+                    </div>
+                </section>
+            </div>
+
+            <div class="right-content">
+                <section class="happy-hours" id="offers" aria-labelledby="offerTitle">
+                    <div class="offer-visual">
+                        <img src="../img/happy.jpeg" alt="Cocktails served during happy hour">
+                        <span class="discount-orb"><small>SAVE</small>20%</span>
+                        <span class="offer-live"><i class="fa-solid fa-bolt"></i> Daily deal</span>
+                    </div>
+
+                    <div class="offer-content">
+                        <span class="offer-tag">ALLEPPEY GOLDEN HOURS</span>
+                        <h2 id="offerTitle">Make the evening count.</h2>
+                        <p>Enjoy 20% off selected beers and handcrafted cocktails.</p>
+
+                        <div class="offer-time">
+                            <span><i class="fa-regular fa-clock"></i> 4 PM – 8 PM</span>
+                            <span><i class="fa-regular fa-calendar"></i> Every day</span>
+                        </div>
+
+                        <a href="menu.html?category=Cocktails" class="offer-link">
+                            Explore happy-hour drinks
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+
+                        <small class="offer-terms">Dine-in only • Selected drinks • Subject to availability</small>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="section-spacer"></div>
+
+        <div class="content-row">
+            <div class="left-content">
+                <section class="featured-items" aria-labelledby="featuredTitle">
+                    <div class="section-title section-title-split">
+                        <div>
+                            <span class="eyebrow">CUSTOMER FAVOURITES</span>
+                            <h2 id="featuredTitle">Popular Right Now</h2>
+                            <p>Three pub favourites chosen for flavour, quality and repeat orders.</p>
+                        </div>
+
+                        <a href="menu.html" class="section-action">
+                            Explore full menu
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <div class="items-grid">
+                        <article class="item-card">
+                            <a href="menu.html?category=Beer" class="item-image">
+                                <img src="../img/lager.jpeg" alt="Lager Beer">
+                                <span class="item-badge"><i class="fa-solid fa-fire"></i> Best seller</span>
+                                <span class="item-view">View details <i class="fa-solid fa-arrow-right"></i></span>
+                            </a>
+
+                            <div class="item-content">
+                                <div class="item-meta">
+                                    <span class="category">Beer</span>
+                                    <span class="rating"><i class="fa-solid fa-star"></i> 4.9 <small>(241)</small></span>
+                                </div>
+                                <h3>Lager Beer</h3>
+                                <p>Fresh chilled premium lager served with crispy snacks.</p>
+                                <div class="item-tags">
+                                    <span><i class="fa-solid fa-snowflake"></i> Chilled</span>
+                                    <span>330 ml</span>
+                                </div>
+
+                                <div class="bottom">
+                                    <div class="item-price"><small>From</small><h4>₹220</h4></div>
+                                    <button type="button" class="home-add-btn" data-product="lager">
+                                        <i class="fa-solid fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="item-card">
+                            <a href="menu.html?category=Cocktails" class="item-image">
+                                <img src="../img/mojito.jpeg" alt="Mojito">
+                                <span class="item-badge item-badge-fresh"><i class="fa-solid fa-leaf"></i> Fresh pick</span>
+                                <span class="item-view">View details <i class="fa-solid fa-arrow-right"></i></span>
+                            </a>
+
+                            <div class="item-content">
+                                <div class="item-meta">
+                                    <span class="category">Cocktail</span>
+                                    <span class="rating"><i class="fa-solid fa-star"></i> 4.8 <small>(190)</small></span>
+                                </div>
+                                <h3>Mojito</h3>
+                                <p>Refreshing mint, lime and soda with a premium blend.</p>
+                                <div class="item-tags">
+                                    <span><i class="fa-solid fa-leaf"></i> Mint</span>
+                                    <span>250 ml</span>
+                                </div>
+
+                                <div class="bottom">
+                                    <div class="item-price"><small>From</small><h4>₹350</h4></div>
+                                    <button type="button" class="home-add-btn" data-product="mojito">
+                                        <i class="fa-solid fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="item-card">
+                            <a href="menu.html?category=Food" class="item-image">
+                                <img src="../img/burger.jpeg" alt="Pub Burger">
+                                <span class="item-badge item-badge-chef"><i class="fa-solid fa-award"></i> Chef's pick</span>
+                                <span class="item-view">View details <i class="fa-solid fa-arrow-right"></i></span>
+                            </a>
+
+                            <div class="item-content">
+                                <div class="item-meta">
+                                    <span class="category">Food</span>
+                                    <span class="rating"><i class="fa-solid fa-star"></i> 5.0 <small>(312)</small></span>
+                                </div>
+                                <h3>Pub Burger</h3>
+                                <p>Juicy grilled burger with fries, fresh lettuce and cheese.</p>
+                                <div class="item-tags">
+                                    <span><i class="fa-solid fa-utensils"></i> With fries</span>
+                                    <span>450 g</span>
+                                </div>
+
+                                <div class="bottom">
+                                    <div class="item-price"><small>From</small><h4>₹420</h4></div>
+                                    <button type="button" class="home-add-btn" data-product="burger">
+                                        <i class="fa-solid fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
+            <div class="right-side">
+                <section class="sticky-card specials" aria-labelledby="specialTitle">
+                    <div class="special-header">
+                        <div class="special-title-wrap">
+                            <span class="special-icon"><i class="fa-solid fa-cloche"></i></span>
+                            <div>
+                                <span class="special-kicker">LIMITED PLATES</span>
+                                <h3 id="specialTitle">Today's Specials</h3>
+                            </div>
+                        </div>
+                        <span class="special-status"><i class="fa-solid fa-circle"></i> Serving now</span>
+                    </div>
+
+                    <div class="special-list">
+                        <a href="menu.html?category=Food" class="special-item">
+                            <span class="special-number">01</span>
+                            <img src="../img/grill.jpeg" alt="Grilled Chicken">
+                            <div class="special-copy">
+                                <h4>Grilled Chicken</h4>
+                                <span>Smoky • Tender • House sauce</span>
+                            </div>
+                            <strong>₹460</strong>
+                            <i class="fa-solid fa-chevron-right special-arrow"></i>
+                        </a>
+
+                        <a href="menu.html?category=Cocktails" class="special-item">
+                            <span class="special-number">02</span>
+                            <img src="../img/margarita.jpeg" alt="Margarita">
+                            <div class="special-copy">
+                                <h4>Margarita</h4>
+                                <span>Citrus • Salt rim • Chilled</span>
+                            </div>
+                            <strong>₹380</strong>
+                            <i class="fa-solid fa-chevron-right special-arrow"></i>
+                        </a>
+
+                        <a href="menu.html?category=Food" class="special-item">
+                            <span class="special-number">03</span>
+                            <img src="../img/wings.jpeg" alt="Chicken Wings">
+                            <div class="special-copy">
+                                <h4>Chicken Wings</h4>
+                                <span>Crispy • Spicy • Shareable</span>
+                            </div>
+                            <strong>₹390</strong>
+                            <i class="fa-solid fa-chevron-right special-arrow"></i>
+                        </a>
+                    </div>
+
+                    <button
+                        class="special-btn"
+                        type="button"
+                        onclick="window.location.href='menu.html'">
+                        View today's full menu
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+
+                    <p class="special-note"><i class="fa-regular fa-clock"></i> Available while today's stock lasts</p>
+                </section>
+            </div>
+        </div>
+
+        <section class="home-section events-section" id="events" aria-labelledby="eventsTitle">
+            <div class="section-heading-wide">
+                <div>
+                    <span class="eyebrow">WHAT'S HAPPENING</span>
+                    <h2 id="eventsTitle">Upcoming Events</h2>
+                </div>
+                <p>Good music, great food and a reason to stay a little longer.</p>
+            </div>
+
+            <div class="event-grid">
+                <article class="event-card">
+                    <div class="event-date"><strong>FRI</strong><span>07:30 PM</span></div>
+                    <i class="fa-solid fa-music event-icon"></i>
+                    <h3>Live Music Friday</h3>
+                    <p>Local artists, acoustic favourites and our full food menu.</p>
+                    <a href="#reservations">Reserve a table</a>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-date"><strong>SAT</strong><span>08:00 PM</span></div>
+                    <i class="fa-solid fa-headphones event-icon"></i>
+                    <h3>Saturday DJ Night</h3>
+                    <p>Weekend mixes, signature cocktails and late-night bites.</p>
+                    <a href="#reservations">Reserve a table</a>
+                </article>
+
+                <article class="event-card">
+                    <div class="event-date"><strong>SUN</strong><span>06:30 PM</span></div>
+                    <i class="fa-solid fa-users event-icon"></i>
+                    <h3>Sunday Social</h3>
+                    <p>A relaxed evening with sharing platters and drink specials.</p>
+                    <a href="#offers">View offers</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="home-section gallery-section" id="gallery" aria-labelledby="galleryTitle">
+            <div class="section-heading-wide">
+                <div>
+                    <span class="eyebrow">A TASTE OF ALLEPPEY</span>
+                    <h2 id="galleryTitle">Gallery</h2>
+                </div>
+                <a href="menu.html" class="text-link">
+                    Explore everything
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="gallery-grid">
+                <a href="menu.html?category=Beer" class="gallery-card gallery-large">
+                    <img src="../img/beer.jpeg" alt="Beer served at Alleppey Pub">
+                    <span>Cold pours</span>
+                </a>
+
+                <a href="menu.html?category=Cocktails" class="gallery-card">
+                    <img src="../img/margarita.jpeg" alt="Margarita cocktail">
+                    <span>Signature cocktails</span>
+                </a>
+
+                <a href="menu.html?category=Food" class="gallery-card">
+                    <img src="../img/burger.jpeg" alt="Pub burger">
+                    <span>Pub favourites</span>
+                </a>
+
+                <a href="menu.html?category=Food" class="gallery-card">
+                    <img src="../img/grill.jpeg" alt="Grilled chicken">
+                    <span>From the grill</span>
+                </a>
+
+                <a href="menu.html?category=Snacks" class="gallery-card">
+                    <img src="../img/wings.jpeg" alt="Chicken wings">
+                    <span>Sharing bites</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="home-section reservation-section" id="reservations" aria-labelledby="reservationTitle">
+            <div class="reservation-copy">
+                <span class="eyebrow">PLAN YOUR VISIT</span>
+                <h2 id="reservationTitle">Reserve Your Table</h2>
+                <p>
+                    Send a demo reservation request. It will be stored in this browser
+                    so you can later connect it to your FastAPI backend and database.
+                </p>
+
+                <div class="reservation-benefits">
+                    <span><i class="fa-solid fa-circle-check"></i> Instant request confirmation</span>
+                    <span><i class="fa-solid fa-circle-check"></i> Tables for up to 12 guests</span>
+                    <span><i class="fa-solid fa-circle-check"></i> Event-night booking support</span>
+                </div>
+            </div>
+
+            <form class="reservation-form" id="reservationForm">
+                <label>
+                    Full name
+                    <input type="text" id="reservationName" name="name" required autocomplete="name">
+                </label>
+
+                <label>
+                    Phone number
+                    <input
+                        type="tel"
+                        id="reservationPhone"
+                        name="phone"
+                        required
+                        inputmode="tel"
+                        autocomplete="tel"
+                        pattern="[0-9+\-\s]{8,15}">
+                </label>
+
+                <label>
+                    Date
+                    <input type="date" id="reservationDate" name="date" required>
+                </label>
+
+                <label>
+                    Time
+                    <select id="reservationTime" name="time" required>
+                        <option value="">Choose a time</option>
+                        <option>04:00 PM</option>
+                        <option>05:30 PM</option>
+                        <option>07:00 PM</option>
+                        <option>08:30 PM</option>
+                        <option>10:00 PM</option>
+                    </select>
+                </label>
+
+                <label>
+                    Guests
+                    <select id="reservationGuests" name="guests" required>
+                        <option value="">Select guests</option>
+                        <option value="1">1 guest</option>
+                        <option value="2">2 guests</option>
+                        <option value="3">3 guests</option>
+                        <option value="4">4 guests</option>
+                        <option value="5">5 guests</option>
+                        <option value="6">6 guests</option>
+                        <option value="8">7–8 guests</option>
+                        <option value="12">9–12 guests</option>
+                    </select>
+                </label>
+
+                <label>
+                    Occasion
+                    <select id="reservationOccasion" name="occasion">
+                        <option value="Regular visit">Regular visit</option>
+                        <option value="Birthday">Birthday</option>
+                        <option value="Anniversary">Anniversary</option>
+                        <option value="Business gathering">Business gathering</option>
+                    </select>
+                </label>
+
+                <button type="submit">
+                    <i class="fa-regular fa-calendar-check"></i>
+                    Request Reservation
+                </button>
+            </form>
+        </section>
+
+        <section class="home-section contact-section" id="contact" aria-labelledby="contactTitle">
+            <div class="section-heading-wide">
+                <div>
+                    <span class="eyebrow">GET IN TOUCH</span>
+                    <h2 id="contactTitle">Contact &amp; Visit</h2>
+                </div>
+                <p>This demo section is ready for your real business details before deployment.</p>
+            </div>
+
+            <div class="contact-grid">
+                <article class="contact-card">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <h3>Location</h3>
+                    <p>Alappuzha, Kerala, India</p>
+                    <a
+                        href="https://www.google.com/maps/search/?api=1&query=Alappuzha+Kerala"
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        Open map
+                    </a>
+                </article>
+
+                <article class="contact-card">
+                    <i class="fa-regular fa-clock"></i>
+                    <h3>Opening Hours</h3>
+                    <p>Every day: 4:00 PM – 11:30 PM</p>
+                    <a href="#reservations">Book a table</a>
+                </article>
+
+                <article class="contact-card">
+                    <i class="fa-solid fa-headset"></i>
+                    <h3>Customer Help</h3>
+                    <p>Use the AI concierge for menu and pairing questions.</p>
+                    <a href="#home">Ask the concierge</a>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="customer-footer">
+        <div>
+            <img src="../img/logo.jpeg" alt="Alleppey Pub and Bar logo">
+            <div>
+                <strong>Alleppey Pub &amp; Bar</strong>
+                <p>Good times, great drinks and best memories.</p>
+            </div>
+        </div>
+
+        <nav aria-label="Footer navigation">
+            <a href="#home">Home</a>
+            <a href="menu.html">Menu</a>
+            <a href="#reservations">Reservations</a>
+            <a href="#contact">Contact</a>
+        </nav>
+
+        <p>Demo ERP customer experience</p>
+    </footer>
+
+    <div class="home-toast" id="homeToast" role="status" aria-live="polite"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/customer-ai.js"></script>
+</body>
+
+</html>
