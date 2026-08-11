@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Dashboard | Alleppey Pub ERP</title>
+
+    <link rel="stylesheet" href="../css/admin-dashboard.css">
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+    >
+</head>
+
+<body>
+
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+
+        <a href="admin-dashboard.html" class="brand">
+            <img src="../img/logo.jpeg" alt="Alleppey Pub and Bar logo">
+
+            <div>
+                <strong>ALLEPPEY PUB</strong>
+                <span>Admin workspace</span>
+            </div>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Administrator navigation">
+
+            <p class="nav-label">Overview</p>
+
+            <a href="admin-dashboard.html" class="nav-link active">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <p class="nav-label">Management</p>
+
+            <a href="order-management.html" class="nav-link">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Orders</span>
+                <span class="nav-count" id="sidebarOrderCount">0</span>
+            </a>
+
+            <a href="menu-management.html" class="nav-link">
+                <i class="fa-solid fa-utensils"></i>
+                <span>Menu Management</span>
+            </a>
+
+            <a href="billing-pos.html" class="nav-link">
+                <i class="fa-solid fa-cash-register"></i>
+                <span>Billing & POS</span>
+            </a>
+
+            <a href="inventory.html" class="nav-link">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <span>Inventory</span>
+                <span class="nav-count warning" id="sidebarStockCount">0</span>
+            </a>
+
+            <p class="nav-label">Intelligence</p>
+
+            <a href="reports-analytics.html" class="nav-link">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Reports & Analytics</span>
+            </a>
+
+            <a href="ai-business-assistant.html" class="nav-link">
+                <i class="fa-solid fa-robot"></i>
+                <span>AI Assistant</span>
+                <span class="ai-tag">AI</span>
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="admin-mini-profile">
+                <img src="../img/me.jpeg" alt="Administrator profile">
+
+                <div>
+                    <strong id="sidebarUsername">Administrator</strong>
+                    <span>System administrator</span>
+                </div>
+            </div>
+
+            <button type="button" class="logout-btn" id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </button>
+
+        </div>
+
+    </aside>
+
+    <!-- Main dashboard -->
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button
+                    type="button"
+                    class="icon-button menu-toggle"
+                    id="menuToggle"
+                    aria-label="Open navigation"
+                >
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <div>
+                    <p class="eyebrow">ADMINISTRATION</p>
+                    <h1>Dashboard</h1>
+                </div>
+
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="live-time">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="liveClock">--</span>
+                </div>
+
+                <button
+                    type="button"
+                    class="icon-button notification-button"
+                    id="notificationBtn"
+                    aria-label="Show dashboard alerts"
+                >
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notification-count" id="notificationCount">0</span>
+                </button>
+
+                <a
+                    href="customer-home.html"
+                    class="customer-view-link"
+                    title="Open customer website"
+                >
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>View website</span>
+                </a>
+
+                <img
+                    src="../img/me.jpeg"
+                    class="profile-image"
+                    alt="Administrator profile"
+                >
+
+            </div>
+
+        </header>
+
+        <!-- Welcome banner -->
+        <section class="welcome-panel">
+
+            <div class="welcome-copy">
+                <span class="welcome-icon">
+                    <i class="fa-solid fa-martini-glass-citrus"></i>
+                </span>
+
+                <div>
+                    <p class="eyebrow">ALLEPPEY PUB & BAR ERP</p>
+                    <h2 id="welcomeHeading">Welcome back, Administrator</h2>
+                    <p>
+                        Monitor orders, revenue and inventory from one workspace.
+                    </p>
+                </div>
+            </div>
+
+            <div class="welcome-actions">
+                <button type="button" class="secondary-button" id="refreshDashboardBtn">
+                    <i class="fa-solid fa-rotate"></i>
+                    Refresh data
+                </button>
+
+                <a href="ai-business-assistant.html" class="primary-button">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    Ask AI
+                </a>
+            </div>
+
+        </section>
+
+        <div class="data-mode" id="dataMode">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Dashboard data status</span>
+        </div>
+
+        <!-- Statistics -->
+        <section class="statistics-grid" aria-label="Business summary">
+
+            <article class="stat-card revenue-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                </div>
+
+                <div class="stat-copy">
+                    <span>Recorded Revenue</span>
+                    <strong id="totalRevenue">₹0</strong>
+                    <small id="revenueDescription">From completed payments</small>
+                </div>
+            </article>
+
+            <article class="stat-card orders-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+
+                <div class="stat-copy">
+                    <span>Total Orders</span>
+                    <strong id="totalOrders">0</strong>
+                    <small id="ordersDescription">All recorded orders</small>
+                </div>
+            </article>
+
+            <article class="stat-card pending-card">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                </div>
+
+                <div class="stat-copy">
+                    <span>Open Orders</span>
+                    <strong id="pendingOrders">0</strong>
+                    <small>Pending, preparing or ready</small>
+                </div>
+            </article>
+
+            <article class="stat-card stock-card-summary">
+                <div class="stat-icon">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+
+                <div class="stat-copy">
+                    <span>Stock Alerts</span>
+                    <strong id="lowStockTotal">0</strong>
+                    <small>At or below reorder level</small>
+                </div>
+            </article>
+
+        </section>
+
+        <!-- First dashboard row -->
+        <section class="dashboard-grid">
+
+            <article class="panel sales-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">PERFORMANCE</p>
+                        <h2>Last 7 Days Revenue</h2>
+                    </div>
+
+                    <span class="panel-badge">
+                        <i class="fa-solid fa-chart-simple"></i>
+                        Weekly
+                    </span>
+                </div>
+
+                <div class="sales-chart" id="salesChartBars">
+                    <!-- Generated by JavaScript -->
+                </div>
+
+            </article>
+
+            <article class="panel quick-actions-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">SHORTCUTS</p>
+                        <h2>Quick Actions</h2>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+
+                    <a href="order-management.html">
+                        <span><i class="fa-solid fa-list-check"></i></span>
+                        <div>
+                            <strong>Manage Orders</strong>
+                            <small>Update order status</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+
+                    <a href="menu-management.html">
+                        <span><i class="fa-solid fa-plus"></i></span>
+                        <div>
+                            <strong>Add Menu Item</strong>
+                            <small>Edit food and drinks</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+
+                    <a href="billing-pos.html">
+                        <span><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                        <div>
+                            <strong>Create Bill</strong>
+                            <small>Open billing and POS</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+
+                    <button type="button" id="printDashboardBtn">
+                        <span><i class="fa-solid fa-print"></i></span>
+                        <div>
+                            <strong>Print Summary</strong>
+                            <small>Print this dashboard</small>
+                        </div>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- Second dashboard row -->
+        <section class="dashboard-grid">
+
+            <article class="panel recent-orders-panel">
+
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">OPERATIONS</p>
+                        <h2>Recent Orders</h2>
+                    </div>
+
+                    <a href="order-management.html" class="text-link">
+                        View all
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Type / Table</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="recentOrdersBody"></tbody>
+                    </table>
+
+                    <div class="empty-state" id="ordersEmptyState">
+                        <i class="fa-solid fa-box-open"></i>
+                        <strong>No orders available</strong>
+                        <span>New customer orders will appear here.</span>
+                    </div>
+                </div>
+
+            </article>
+
+            <div class="side-panels">
+
+                <article class="panel inventory-alerts-panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">INVENTORY</p>
+                            <h2>Low Stock</h2>
+                        </div>
+
+                        <a href="inventory.html" class="small-icon-link" aria-label="Open inventory">
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    <div class="inventory-alert-list" id="inventoryAlertList"></div>
+
+                    <div class="empty-state compact" id="inventoryEmptyState">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <strong>Stock levels look healthy</strong>
+                    </div>
+
+                </article>
+
+                <article class="panel popular-items-panel">
+
+                    <div class="panel-heading">
+                        <div>
+                            <p class="eyebrow">SALES MIX</p>
+                            <h2>Popular Items</h2>
+                        </div>
+                    </div>
+
+                    <div class="popular-items-list" id="popularItemsList"></div>
+
+                    <div class="empty-state compact" id="popularItemsEmptyState">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        <strong>No item sales recorded</strong>
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <footer class="dashboard-footer">
+            <p>&copy; 2026 Alleppey Pub & Bar ERP</p>
+
+            <span>
+                <i class="fa-solid fa-circle"></i>
+                System ready
+            </span>
+        </footer>
+
+    </main>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="../js/admin-dashboard.js"></script>
+
+</body>
+
+</html>
