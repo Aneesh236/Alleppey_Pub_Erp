@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Login | Alleppey Pub ERP</title>
+    <title>Staff Login | Alleppey Pub ERP</title>
 
     <link rel="stylesheet" href="../css/login.css">
 
@@ -56,56 +56,19 @@
 
                 <div class="card-heading">
 
-                    <h2>Welcome Back</h2>
+                    <h2 id="roleTitle">Staff Login</h2>
 
-                    <p>Select your role and enter your credentials</p>
+                    <p id="roleMessage">Enter your staff credentials</p>
 
                 </div>
 
                 <form id="loginForm" novalidate>
 
-                    <!-- Role Selection -->
-                    <fieldset class="role-selection">
-
-                        <legend>Select your role</legend>
-
-                        <label class="role-option">
-
-                            <input
-                                type="radio"
-                                name="role"
-                                value="employee"
-                            >
-
-                            <span class="role-content">
-
-                                <i class="fa-solid fa-user-tie"></i>
-
-                                Employee
-
-                            </span>
-
-                        </label>
-
-                        <label class="role-option">
-
-                            <input
-                                type="radio"
-                                name="role"
-                                value="admin"
-                            >
-
-                            <span class="role-content">
-
-                                <i class="fa-solid fa-user-shield"></i>
-
-                                Administrator
-
-                            </span>
-
-                        </label>
-
-                    </fieldset>
+                    <!-- The role comes from role-selection.html -->
+                    <div class="role-badge" id="roleBadge">
+                        <i id="roleIcon" class="fa-solid fa-user-lock"></i>
+                        <span>Signing in as <strong id="roleName">Staff</strong></span>
+                    </div>
 
                     <!-- Username -->
                     <div class="input-group">
@@ -211,17 +174,8 @@
                     </p>
 
                     <div class="credential-list">
-
-                        <span>
-                            Employee:
-                            <strong>employee / 1234</strong>
-                        </span>
-
-                        <span>
-                            Admin:
-                            <strong>admin / admin123</strong>
-                        </span>
-
+                        <span>Username / password:</span>
+                        <strong id="demoLogin">Loading...</strong>
                     </div>
 
                 </div>

@@ -6,10 +6,12 @@
 const ORDER_STORAGE_KEY = "pubOrders";
 const BILL_STORAGE_KEY = "pubBills";
 const INVENTORY_STORAGE_KEY = "pubInventory";
+const REPORT_REFRESH_INTERVAL = 30000;
 
 let orders = [];
 let bills = [];
 let inventoryItems = [];
+let savedBills = [];
 
 let filteredBills = [];
 let filteredOrders = [];
@@ -49,6 +51,12 @@ const endDateInput =
 
 const applyCustomDateBtn =
     document.getElementById("applyCustomDateBtn");
+
+const backDashboardBtn =
+    document.getElementById("backDashboardBtn");
+
+const reportDataStatus =
+    document.getElementById("reportDataStatus");
 
 
 /* =========================================
@@ -354,6 +362,233 @@ const defaultBills = [
 
 
 /* =========================================
+   ADMIN ACCESS AND LIVE API
+========================================= */
+
+function checkAdminAccess() {
+
+    const role = localStorage.getItem("userRole");
+
+    const loggedIn =
+        localStorage.getItem("adminLoggedIn") === "true" ||
+        sessionStorage.getItem("adminLoggedIn") === "true";
+
+    if (role !== "admin" || !loggedIn) {
+        window.location.replace("role-selection.html");
+        return false;
+    }
+
+    return true;
+
+}
+
+
+function getApiBaseUrl() {
+
+    const baseUrl =
+        String(window.PUB_API_BASE_URL || "")
+            .replace(/\/+$/, "");
+
+    if (!baseUrl) {
+        throw new Error("The backend URL is missing from config.js.");
+    }
+
+    return baseUrl;
+
+}
+
+
+async function apiRequest(path) {
+
+    const response = await fetch(
+        `${getApiBaseUrl()}${path}`,
+        {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }
+    );
+
+    let result = null;
+
+    try {
+        result = await response.json();
+    } catch (error) {
+        console.error("The server response could not be read.", error);
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            result?.detail ||
+            `Server error ${response.status}`
+        );
+    }
+
+    return Array.isArray(result) ? result : [];
+
+}
+
+
+async function refreshReportsFromApi(showMessage = true) {
+
+    if (refreshReportsBtn.disabled) {
+        return false;
+    }
+
+    refreshReportsBtn.disabled = true;
+    refreshReportsBtn.querySelector("i")
+        ?.classList.add("fa-spin");
+
+    try {
+
+        const [liveOrders, liveInventory, liveBills] =
+            await Promise.all([
+                apiRequest("/orders"),
+                apiRequest("/inventory"),
+                apiRequest("/bills")
+            ]);
+
+        orders = liveOrders.map(normalizeOrder);
+        inventoryItems = liveInventory.map(normalizeInventoryItem);
+        bills = liveBills.map(normalizeBill);
+        savedBills = [...bills];
+
+        localStorage.setItem(
+            ORDER_STORAGE_KEY,
+            JSON.stringify(orders)
+        );
+
+        localStorage.setItem(
+            INVENTORY_STORAGE_KEY,
+            JSON.stringify(inventoryItems)
+        );
+
+        localStorage.setItem(
+            BILL_STORAGE_KEY,
+            JSON.stringify(bills)
+        );
+
+        updateDashboard();
+        showReportDataStatus(false);
+
+        if (showMessage) {
+            showToast("Reports refreshed from the database.", "success");
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.error("Unable to refresh live reports.", error);
+        loadReportsData();
+        updateDashboard();
+        showReportDataStatus(true);
+
+        if (showMessage) {
+            showToast("Server unavailable. Showing saved report data.", "error");
+        }
+
+        return false;
+
+    } finally {
+
+        refreshReportsBtn.disabled = false;
+        refreshReportsBtn.querySelector("i")
+            ?.classList.remove("fa-spin");
+
+    }
+
+}
+
+
+function readSavedBills() {
+
+    try {
+        const value = JSON.parse(
+            localStorage.getItem(BILL_STORAGE_KEY)
+        );
+
+        return Array.isArray(value)
+            ? value.map(normalizeBill)
+            : [];
+    } catch (error) {
+        console.warn("Saved bills could not be read.", error);
+        return [];
+    }
+
+}
+
+
+function mergeBillsWithCompletedOrders(localBills, orderRecords) {
+
+    const billedOrderIds = new Set(
+        localBills.map(bill => bill.orderId)
+    );
+
+    const databaseBills = orderRecords
+        .filter(order => {
+            const status = String(order.status).toLowerCase();
+            return (
+                ["completed", "paid"].includes(status) &&
+                !billedOrderIds.has(order.id)
+            );
+        })
+        .map(order => normalizeBill({
+            id: `LIVE-${order.id}`,
+            orderId: order.id,
+            customer: order.customer,
+            table: order.table,
+            orderType: order.orderType,
+            items: order.items,
+            subtotal: order.subtotal,
+            discount: order.discount,
+            gst: order.gst,
+            serviceCharge: order.serviceCharge,
+            total: order.total || calculateOrderValue(order.items),
+            paymentMethod: order.payment,
+            paymentStatus: "Paid",
+            createdAt: order.time
+        }));
+
+    return [...localBills, ...databaseBills];
+
+}
+
+
+function calculateOrderValue(items) {
+
+    return items.reduce(
+        (total, item) =>
+            total + item.price * item.quantity,
+        0
+    );
+
+}
+
+
+function showReportDataStatus(usingCache) {
+
+    if (usingCache) {
+        reportDataStatus.textContent =
+            "Saved data - backend currently unavailable";
+        reportDataStatus.classList.add("offline");
+        return;
+    }
+
+    const time = new Date().toLocaleTimeString(
+        "en-IN",
+        { hour: "2-digit", minute: "2-digit" }
+    );
+
+    reportDataStatus.textContent =
+        `Live database - updated ${time}`;
+    reportDataStatus.classList.remove("offline");
+
+}
+
+
+/* =========================================
    LOAD DATA
 ========================================= */
 
@@ -368,7 +603,7 @@ function loadReportsData() {
                 )
             );
 
-        const savedBills =
+        const storedBills =
             JSON.parse(
                 localStorage.getItem(
                     BILL_STORAGE_KEY
@@ -383,40 +618,16 @@ function loadReportsData() {
             );
 
 
-        if (Array.isArray(savedOrders)) {
-
-            orders =
-                savedOrders.map(normalizeOrder);
-
-        } else {
-
-            orders =
-                defaultOrders.map(normalizeOrder);
-
-            localStorage.setItem(
-                ORDER_STORAGE_KEY,
-                JSON.stringify(orders)
-            );
-
-        }
+        orders =
+            Array.isArray(savedOrders)
+                ? savedOrders.map(normalizeOrder)
+                : [];
 
 
-        if (Array.isArray(savedBills)) {
-
-            bills =
-                savedBills.map(normalizeBill);
-
-        } else {
-
-            bills =
-                defaultBills.map(normalizeBill);
-
-            localStorage.setItem(
-                BILL_STORAGE_KEY,
-                JSON.stringify(bills)
-            );
-
-        }
+        savedBills =
+            Array.isArray(storedBills)
+                ? storedBills.map(normalizeBill)
+                : [];
 
 
         inventoryItems =
@@ -426,6 +637,12 @@ function loadReportsData() {
                 )
                 : [];
 
+
+        bills = mergeBillsWithCompletedOrders(
+            savedBills,
+            orders
+        );
+
     } catch (error) {
 
         console.error(
@@ -433,11 +650,11 @@ function loadReportsData() {
             error
         );
 
-        orders =
-            defaultOrders.map(normalizeOrder);
+        orders = [];
 
-        bills =
-            defaultBills.map(normalizeBill);
+        savedBills = [];
+
+        bills = [];
 
         inventoryItems = [];
 
@@ -491,7 +708,29 @@ function normalizeOrder(order) {
         time:
             order.time ||
             order.createdAt ||
+            order.date ||
             new Date().toISOString(),
+
+        payment:
+            String(
+                order.payment ||
+                "Cash"
+            ),
+
+        subtotal:
+            Number(order.subtotal) || 0,
+
+        discount:
+            Number(order.discount) || 0,
+
+        gst:
+            Number(order.gst) || 0,
+
+        serviceCharge:
+            Number(order.serviceCharge) || 0,
+
+        total:
+            Number(order.total) || 0,
 
         items:
             Array.isArray(order.items)
@@ -606,7 +845,7 @@ function normalizeItem(item) {
             Number(item.price) || 0,
 
         quantity:
-            Number(item.quantity) || 1
+            Number(item.quantity ?? item.qty) || 1
 
     };
 
@@ -1435,7 +1674,7 @@ function renderRevenueChart() {
                                     ) {
 
                                         return (
-                                            `Revenue: ₹${formatMoney(
+                                            `Revenue: \u20B9${formatMoney(
                                                 context.raw
                                             )}`
                                         );
@@ -1469,7 +1708,7 @@ function renderRevenueChart() {
                                         value
                                     ) {
 
-                                        return `₹${value}`;
+                                        return `\u20B9${value}`;
 
                                     }
 
@@ -1916,7 +2155,7 @@ function renderPaymentMethodChart() {
                                         }
 
                                         return (
-                                            `${context.label}: ₹${formatMoney(
+                                            `${context.label}: \u20B9${formatMoney(
                                                 context.raw
                                             )}`
                                         );
@@ -2001,7 +2240,7 @@ function renderPaymentLegend(
                 </div>
 
                 <strong>
-                    ₹${formatMoney(values[index])}
+                    \u20B9${formatMoney(values[index])}
                 </strong>
 
             `;
@@ -2227,7 +2466,7 @@ function renderOrderTypeChart() {
                                         }
 
                                         return (
-                                            `${context.label}: ₹${formatMoney(
+                                            `${context.label}: \u20B9${formatMoney(
                                                 context.raw
                                             )}`
                                         );
@@ -2510,7 +2749,7 @@ function renderPopularItems() {
 
                         <span class="analytics-revenue">
 
-                            ₹${formatMoney(item.revenue)}
+                            \u20B9${formatMoney(item.revenue)}
 
                         </span>
 
@@ -2789,7 +3028,7 @@ function renderTransactions() {
 
                     <span class="transaction-total">
 
-                        ₹${formatMoney(bill.total)}
+                        \u20B9${formatMoney(bill.total)}
 
                     </span>
 
@@ -2842,9 +3081,9 @@ function updateBusinessInsights() {
             paidBills.length;
 
         revenueInsight.textContent =
-            `The selected period generated ₹${formatMoney(
+            `The selected period generated \u20B9${formatMoney(
                 revenue
-            )} from ${paidBills.length} paid bills, with an average bill value of ₹${formatMoney(
+            )} from ${paidBills.length} paid bills, with an average bill value of \u20B9${formatMoney(
                 average
             )}.`;
 
@@ -2866,7 +3105,7 @@ function updateBusinessInsights() {
             popularItems[0];
 
         productInsight.textContent =
-            `${topItem.name} is the best-selling item with ${topItem.quantity} units sold and ₹${formatMoney(
+            `${topItem.name} is the best-selling item with ${topItem.quantity} units sold and \u20B9${formatMoney(
                 topItem.revenue
             )} in revenue.`;
 
@@ -2904,7 +3143,7 @@ function updateBusinessInsights() {
     if (topPaymentMethod) {
 
         paymentInsight.textContent =
-            `${topPaymentMethod[0]} is the leading payment method, accounting for ₹${formatMoney(
+            `${topPaymentMethod[0]} is the leading payment method, accounting for \u20B9${formatMoney(
                 topPaymentMethod[1]
             )} in completed payments.`;
 
@@ -3073,34 +3312,7 @@ applyCustomDateBtn.addEventListener(
 refreshReportsBtn.addEventListener(
     "click",
     function () {
-
-        refreshReportsBtn
-            .querySelector("i")
-            .classList.add(
-                "fa-spin"
-            );
-
-
-        loadReportsData();
-
-        updateDashboard();
-
-
-        setTimeout(() => {
-
-            refreshReportsBtn
-                .querySelector("i")
-                .classList.remove(
-                    "fa-spin"
-                );
-
-        }, 700);
-
-
-        showToast(
-            "Reports refreshed successfully.",
-            "success"
-        );
+        refreshReportsFromApi(true);
 
     }
 );
@@ -3510,7 +3722,7 @@ function formatDateTime(value) {
         )
     ) {
 
-        return "—";
+        return "\u2014";
 
     }
 
@@ -3712,7 +3924,11 @@ function formatDateForInput(date) {
    INITIALIZE PAGE
 ========================================= */
 
-function initializeReportsPage() {
+async function initializeReportsPage() {
+
+    if (!checkAdminAccess()) {
+        return;
+    }
 
     configureChartDefaults();
 
@@ -3722,7 +3938,45 @@ function initializeReportsPage() {
 
     updateDashboard();
 
+    showReportDataStatus(true);
+
+    await refreshReportsFromApi(false);
+
+    window.setInterval(
+        function () {
+            if (!document.hidden) {
+                refreshReportsFromApi(false);
+            }
+        },
+        REPORT_REFRESH_INTERVAL
+    );
+
 }
+
+
+backDashboardBtn.addEventListener(
+    "click",
+    function () {
+        window.location.href = "admin-dashboard.html";
+    }
+);
+
+
+window.addEventListener(
+    "storage",
+    function (event) {
+        if (
+            [
+                ORDER_STORAGE_KEY,
+                BILL_STORAGE_KEY,
+                INVENTORY_STORAGE_KEY
+            ].includes(event.key)
+        ) {
+            loadReportsData();
+            updateDashboard();
+        }
+    }
+);
 
 
 initializeReportsPage();

@@ -88,10 +88,10 @@
                 <!-- Customer -->
 
                 <article class="role-card customer-card"
-                         onclick="customerLogin()"
+                         data-role="customer"
                          tabindex="0"
                          role="button"
-                         onkeydown="handleCardKey(event, customerLogin)">
+                         aria-label="Continue to the customer portal">
 
                     <div class="card-top">
 
@@ -162,10 +162,10 @@
                 <!-- Employee -->
 
                 <article class="role-card employee-card"
-                         onclick="employeeLogin()"
+                         data-role="employee"
                          tabindex="0"
                          role="button"
-                         onkeydown="handleCardKey(event, employeeLogin)">
+                         aria-label="Continue to the employee login">
 
                     <div class="card-top">
 
@@ -236,10 +236,10 @@
                 <!-- Admin -->
 
                 <article class="role-card admin-card"
-                         onclick="adminLogin()"
+                         data-role="admin"
                          tabindex="0"
                          role="button"
-                         onkeydown="handleCardKey(event, adminLogin)">
+                         aria-label="Continue to the administrator login">
 
                     <div class="card-top">
 
@@ -319,9 +319,9 @@
 
                     <div>
 
-                        <strong>Secure Access</strong>
+                        <strong>Role-Based Access</strong>
 
-                        <span>Protected role-based login</span>
+                        <span>Separate customer and staff portals</span>
 
                     </div>
 

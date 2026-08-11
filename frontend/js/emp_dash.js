@@ -1,153 +1,262 @@
-/* ==========================================
-   ALLEPPEY PUB ERP
-   EMPLOYEE DASHBOARD
-========================================== */
+"use strict";
 
-const ORDER_STORAGE_KEY = "pubOrders";
+/* Alleppey Pub ERP - live employee dashboard */
 
-const liveClock =
-    document.getElementById("liveClock");
+const ORDER_CACHE_KEY = "pubOrders";
+const REFRESH_INTERVAL = 20000;
 
-const ordersTable =
-    document.getElementById("ordersTable");
-
-const refreshButton =
-    document.querySelector(".refresh-btn");
-
-const logoutButton =
-    document.getElementById("logoutBtn");
-
-const toast =
-    document.getElementById("toast");
-
-const statisticNumbers =
-    document.querySelectorAll(".cards .card h2");
-
-const actionButtons =
-    document.querySelectorAll(".action-grid button");
-
-
-/* ==========================================
-   DEMONSTRATION ORDERS
-========================================== */
-
-const demonstrationOrders = [
-    {
-        id: "#1025",
-        table: "5",
-        customer: "John",
-        status: "Preparing",
-        total: 1250
-    },
-    {
-        id: "#1026",
-        table: "2",
-        customer: "Rahul",
-        status: "Pending",
-        total: 860
-    },
-    {
-        id: "#1027",
-        table: "8",
-        customer: "Anu",
-        status: "Ready",
-        total: 740
-    },
-    {
-        id: "#1028",
-        table: "11",
-        customer: "Alex",
-        status: "Completed",
-        total: 1420
-    }
+const STATUS_OPTIONS = [
+    "Pending",
+    "Preparing",
+    "Ready",
+    "Completed"
 ];
 
+let orders = [];
+let toastTimer = null;
+
 
 /* ==========================================
-   LIVE CLOCK
+   PAGE ELEMENTS
 ========================================== */
 
-function updateClock() {
+const elements = {
+    liveClock: document.getElementById("liveClock"),
+    ordersTable: document.getElementById("ordersTable"),
+    refreshButton: document.querySelector(".refresh-btn"),
 
-    const currentDate = new Date();
+    logoutButton: document.getElementById("logoutBtn"),
+    sidebarLogoutButton: document.getElementById("sidebarLogoutBtn"),
 
-    const time = currentDate.toLocaleTimeString(
-        "en-IN",
-        {
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hour12: true,
-            timeZone: "Asia/Kolkata"
-        }
-    );
+    newOrderButton: document.getElementById("newOrderBtn"),
+    printButton: document.getElementById("printBtn"),
+    viewOrdersButton: document.getElementById("viewOrdersBtn"),
 
-    const date = currentDate.toLocaleDateString(
-        "en-IN",
-        {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-            timeZone: "Asia/Kolkata"
-        }
-    );
+    employeeName: document.getElementById("employeeName"),
+    welcomeMessage: document.getElementById("welcomeMessage"),
 
-    liveClock.innerHTML = `
-        <div>${time}</div>
+    pendingCount: document.getElementById("pendingCount"),
+    preparingCount: document.getElementById("preparingCount"),
+    readyCount: document.getElementById("readyCount"),
+    occupiedCount: document.getElementById("occupiedCount"),
 
-        <small style="
-            display:block;
-            margin-top:4px;
-            color:#aaa;
-            font-size:12px;
-            font-weight:400;
-        ">
-            ${date}
-        </small>
-    `;
+    activityList: document.getElementById("activityList"),
+    dataStatus: document.getElementById("dataStatus"),
+    toast: document.getElementById("toast")
+};
+
+
+/* ==========================================
+   EMPLOYEE ACCESS
+========================================== */
+
+function checkEmployeeAccess() {
+    const role =
+        localStorage.getItem("userRole");
+
+    const employeeLoggedIn =
+        localStorage.getItem("employeeLoggedIn") === "true" ||
+        sessionStorage.getItem("employeeLoggedIn") === "true";
+
+    if (role !== "employee" || !employeeLoggedIn) {
+        window.location.replace("role-selection.html");
+        return false;
+    }
+
+    return true;
 }
 
-updateClock();
 
-setInterval(updateClock, 1000);
+/* ==========================================
+   API
+========================================== */
+
+function getApiBaseUrl() {
+    const baseUrl =
+        String(window.PUB_API_BASE_URL || "")
+            .replace(/\/+$/, "");
+
+    if (!baseUrl) {
+        throw new Error(
+            "The backend URL is missing from config.js."
+        );
+    }
+
+    return baseUrl;
+}
+
+
+async function apiRequest(path, options = {}) {
+    const response = await fetch(
+        `${getApiBaseUrl()}${path}`,
+        {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            ...options
+        }
+    );
+
+    let result = null;
+
+    try {
+        result = await response.json();
+    } catch (error) {
+        if (response.status !== 204) {
+            console.error(
+                "The server response could not be read.",
+                error
+            );
+        }
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            result?.detail ||
+            `Server error ${response.status}`
+        );
+    }
+
+    return result;
+}
 
 
 /* ==========================================
-   LOAD ORDERS
+   REFRESH LIVE ORDERS
 ========================================== */
 
-function loadOrders() {
+async function refreshOrders(showMessage = true) {
+    setRefreshLoading(true);
 
     try {
+        const result =
+            await apiRequest("/orders");
 
-        const savedOrders =
-            JSON.parse(
-                localStorage.getItem(
-                    ORDER_STORAGE_KEY
-                )
-            );
+        orders =
+            Array.isArray(result)
+                ? result.map(normalizeOrder)
+                : [];
 
-        if (
-            Array.isArray(savedOrders) &&
-            savedOrders.length > 0
-        ) {
-            return savedOrders.map(
-                normalizeOrder
+        localStorage.setItem(
+            ORDER_CACHE_KEY,
+            JSON.stringify(orders)
+        );
+
+        renderDashboard();
+        showDataStatus(false);
+
+        if (showMessage) {
+            showToast(
+                "Orders refreshed from the database.",
+                "success"
             );
         }
-
     } catch (error) {
-
         console.error(
-            "Unable to load orders:",
+            "Could not load live orders.",
             error
         );
 
-    }
+        orders = loadCachedOrders();
 
-    return demonstrationOrders.map(
-        normalizeOrder
-    );
+        renderDashboard();
+        showDataStatus(true);
+
+        if (showMessage) {
+            showToast(
+                "Server unavailable. Showing saved orders.",
+                "error"
+            );
+        }
+    } finally {
+        setRefreshLoading(false);
+    }
+}
+
+
+/* ==========================================
+   UPDATE ORDER STATUS
+========================================== */
+
+async function updateOrderStatus(
+    orderId,
+    status,
+    selectElement
+) {
+    selectElement.disabled = true;
+
+    try {
+        const updatedOrder =
+            await apiRequest(
+                `/orders/${encodeURIComponent(orderId)}/status`,
+                {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                        status: status
+                    })
+                }
+            );
+
+        orders = orders.map(order => {
+            if (order.id === orderId) {
+                return normalizeOrder(updatedOrder);
+            }
+
+            return order;
+        });
+
+        localStorage.setItem(
+            ORDER_CACHE_KEY,
+            JSON.stringify(orders)
+        );
+
+        renderDashboard();
+
+        showToast(
+            `${orderId} changed to ${status}.`,
+            "success"
+        );
+    } catch (error) {
+        console.error(
+            "Could not update order status.",
+            error
+        );
+
+        renderOrders();
+
+        showToast(
+            error.message ||
+            "Could not update the order.",
+            "error"
+        );
+    }
+}
+
+
+/* ==========================================
+   CACHED ORDERS
+========================================== */
+
+function loadCachedOrders() {
+    try {
+        const savedOrders =
+            JSON.parse(
+                localStorage.getItem(
+                    ORDER_CACHE_KEY
+                )
+            );
+
+        return Array.isArray(savedOrders)
+            ? savedOrders.map(normalizeOrder)
+            : [];
+    } catch (error) {
+        console.warn(
+            "Saved orders could not be read.",
+            error
+        );
+
+        return [];
+    }
 }
 
 
@@ -155,41 +264,107 @@ function loadOrders() {
    NORMALIZE ORDER
 ========================================== */
 
-function normalizeOrder(order, index) {
-
+function normalizeOrder(order, index = 0) {
     const total =
         Number(
-            order.total ??
-            order.grandTotal ??
-            order.finalTotal ??
+            order?.total ??
+            order?.grandTotal ??
+            0
+        );
+
+    const items =
+        Array.isArray(order?.items)
+            ? order.items
+            : [];
+
+    const itemCount =
+        Number(order?.itemCount) ||
+        items.reduce(
+            (sum, item) => {
+                return sum +
+                    (
+                        Number(
+                            item.qty ??
+                            item.quantity
+                        ) || 0
+                    );
+            },
             0
         );
 
     return {
-        id:
-            order.id ||
-            order.orderId ||
-            `#${1025 + index}`,
+        ...order,
 
-        table:
-            order.table ||
-            order.tableNumber ||
-            "-",
+        id: String(
+            order?.id ||
+            order?.orderId ||
+            `ORDER-${index + 1}`
+        ),
 
-        customer:
-            order.customer ||
-            order.customerName ||
-            "Walk-in Customer",
+        table: String(
+            order?.table ||
+            order?.tableNumber ||
+            "Takeaway"
+        ),
 
-        status:
-            order.status ||
-            "Pending",
+        customer: String(
+            order?.customer ||
+            order?.customerName ||
+            "Walk-in Customer"
+        ),
+
+        status: String(
+            order?.status ||
+            "Pending"
+        ),
 
         total:
             Number.isFinite(total)
                 ? total
-                : 0
+                : 0,
+
+        items: items,
+
+        itemCount: itemCount,
+
+        createdAt:
+            order?.createdAt ||
+            order?.date ||
+            ""
     };
+}
+
+
+/* ==========================================
+   ORDER HELPERS
+========================================== */
+
+function normalizeStatus(status) {
+    return String(status || "")
+        .trim()
+        .toLowerCase();
+}
+
+
+function isActiveOrder(order) {
+    const status =
+        normalizeStatus(order.status);
+
+    return ![
+        "completed",
+        "cancelled"
+    ].includes(status);
+}
+
+
+/* ==========================================
+   RENDER DASHBOARD
+========================================== */
+
+function renderDashboard() {
+    renderOrders();
+    renderStatistics();
+    renderActivity();
 }
 
 
@@ -198,332 +373,337 @@ function normalizeOrder(order, index) {
 ========================================== */
 
 function renderOrders() {
+    const activeOrders =
+        orders.filter(isActiveOrder);
 
-    const orders = loadOrders();
-
-    if (!ordersTable) {
-        return;
-    }
-
-    if (orders.length === 0) {
-
-        ordersTable.innerHTML = `
+    if (!activeOrders.length) {
+        elements.ordersTable.innerHTML = `
             <tr>
-                <td colspan="5"
-                    class="empty-orders">
-
-                    No live orders available.
-
+                <td
+                    colspan="6"
+                    class="empty-orders"
+                >
+                    No active orders are waiting right now.
                 </td>
             </tr>
         `;
 
-        updateStatistics([]);
-
         return;
     }
 
-    ordersTable.innerHTML = orders
-        .slice()
-        .reverse()
-        .slice(0, 8)
-        .map((order) => {
+    elements.ordersTable.innerHTML =
+        activeOrders
+            .slice(0, 10)
+            .map(order => {
+                const currentStatus =
+                    normalizeStatus(order.status);
 
-            const statusClass =
-                getStatusClass(
-                    order.status
-                );
+                const statusOptions =
+                    STATUS_OPTIONS
+                        .map(option => {
+                            const selected =
+                                normalizeStatus(option) === currentStatus
+                                    ? "selected"
+                                    : "";
 
-            return `
-                <tr>
+                            return `
+                                <option
+                                    value="${option}"
+                                    ${selected}
+                                >
+                                    ${option}
+                                </option>
+                            `;
+                        })
+                        .join("");
 
-                    <td>
-                        ${escapeHTML(order.id)}
-                    </td>
+                return `
+                    <tr>
+                        <td>
+                            <strong>
+                                ${escapeHTML(order.id)}
+                            </strong>
+                        </td>
 
-                    <td>
-                        ${escapeHTML(order.table)}
-                    </td>
+                        <td>
+                            ${escapeHTML(
+                                formatTable(order.table)
+                            )}
+                        </td>
 
-                    <td>
-                        ${escapeHTML(order.customer)}
-                    </td>
+                        <td>
+                            ${escapeHTML(order.customer)}
+                        </td>
 
-                    <td>
+                        <td>
+                            ${escapeHTML(
+                                formatItemCount(
+                                    order.itemCount
+                                )
+                            )}
+                        </td>
 
-                        <span class="status ${statusClass}">
+                        <td>
+                            <select
+                                class="
+                                    status-select
+                                    ${getStatusClass(order.status)}
+                                "
+                                data-order-id="
+                                    ${escapeAttribute(order.id)}
+                                "
+                                aria-label="
+                                    Change status for
+                                    ${escapeAttribute(order.id)}
+                                "
+                            >
+                                ${statusOptions}
+                            </select>
+                        </td>
 
-                            ${escapeHTML(order.status)}
-
-                        </span>
-
-                    </td>
-
-                    <td>
-                        ${formatMoney(order.total)}
-                    </td>
-
-                </tr>
-            `;
-
-        })
-        .join("");
-
-    updateStatistics(orders);
+                        <td>
+                            ${formatMoney(order.total)}
+                        </td>
+                    </tr>
+                `;
+            })
+            .join("");
 }
 
 
 /* ==========================================
-   UPDATE STATISTICS
+   DASHBOARD STATISTICS
 ========================================== */
 
-function updateStatistics(orders) {
-
-    const pendingOrders =
-        orders.filter((order) =>
-            normalizeStatus(order.status) ===
-            "pending"
-        ).length;
-
-    const preparingOrders =
-        orders.filter((order) =>
-            normalizeStatus(order.status) ===
-            "preparing"
-        ).length;
-
-    const readyOrders =
-        orders.filter((order) =>
-            normalizeStatus(order.status) ===
-            "ready"
-        ).length;
+function renderStatistics() {
+    function countStatus(status) {
+        return orders.filter(order => {
+            return normalizeStatus(order.status) === status;
+        }).length;
+    }
 
     const occupiedTables =
         new Set(
             orders
-                .filter((order) => {
-
-                    const status =
-                        normalizeStatus(
-                            order.status
-                        );
-
-                    return (
-                        order.table !== "-" &&
-                        status !== "completed" &&
-                        status !== "cancelled"
-                    );
-
+                .filter(isActiveOrder)
+                .map(order => {
+                    return String(order.table).trim();
                 })
-                .map((order) =>
-                    String(order.table)
-                )
+                .filter(table => {
+                    return (
+                        table &&
+                        !/takeaway/i.test(table)
+                    );
+                })
         ).size;
 
-    if (statisticNumbers.length >= 4) {
+    elements.pendingCount.textContent =
+        countStatus("pending");
 
-        statisticNumbers[0].textContent =
-            pendingOrders;
+    elements.preparingCount.textContent =
+        countStatus("preparing");
 
-        statisticNumbers[1].textContent =
-            preparingOrders;
+    elements.readyCount.textContent =
+        countStatus("ready");
 
-        statisticNumbers[2].textContent =
-            readyOrders;
-
-        statisticNumbers[3].textContent =
-            occupiedTables;
-    }
+    elements.occupiedCount.textContent =
+        occupiedTables;
 }
 
 
 /* ==========================================
-   REFRESH ORDERS
+   RECENT ACTIVITY
 ========================================== */
 
-function refreshOrders() {
+function renderActivity() {
+    const recentOrders =
+        [...orders]
+            .sort((firstOrder, secondOrder) => {
+                return (
+                    getOrderTime(secondOrder) -
+                    getOrderTime(firstOrder)
+                );
+            })
+            .slice(0, 5);
 
-    if (!refreshButton) {
+    if (!recentOrders.length) {
+        elements.activityList.innerHTML = `
+            <li class="empty-activity">
+                <i class="fa-solid fa-clock"></i>
+                No recent order activity.
+            </li>
+        `;
+
         return;
     }
 
-    const icon =
-        refreshButton.querySelector("i");
+    elements.activityList.innerHTML =
+        recentOrders
+            .map(order => {
+                return `
+                    <li>
+                        <i
+                            class="
+                                fa-solid
+                                ${getActivityIcon(order.status)}
+                            "
+                        ></i>
 
-    refreshButton.disabled = true;
+                        <span>
+                            <strong>
+                                ${escapeHTML(order.id)}
+                            </strong>
 
-    if (icon) {
-        icon.classList.add("fa-spin");
-    }
+                            is ${escapeHTML(order.status)}
 
-    setTimeout(() => {
+                            <small>
+                                ${escapeHTML(
+                                    formatOrderTime(
+                                        order.createdAt
+                                    )
+                                )}
+                            </small>
+                        </span>
+                    </li>
+                `;
+            })
+            .join("");
+}
 
-        renderOrders();
 
-        refreshButton.disabled = false;
+/* ==========================================
+   DATA STATUS
+========================================== */
 
-        if (icon) {
-            icon.classList.remove("fa-spin");
-        }
+function showDataStatus(usingCache) {
+    if (usingCache) {
+        elements.dataStatus.textContent =
+            "Saved data - backend currently unavailable";
 
-        showToast(
-            "Orders refreshed successfully."
+        elements.dataStatus.classList.add(
+            "offline"
         );
 
-    }, 600);
-}
-
-if (refreshButton) {
-
-    refreshButton.addEventListener(
-        "click",
-        refreshOrders
-    );
-
-}
-
-
-/* ==========================================
-   QUICK ACTION NAVIGATION
-========================================== */
-
-if (actionButtons.length >= 4) {
-
-    // New Order
-    actionButtons[0].onclick = function () {
-
-        window.location.href =
-            "../html/menu.html";
-
-    };
-
-    // Print Receipt
-    actionButtons[1].onclick = function () {
-
-        window.print();
-
-    };
-
-    // View Orders
-    actionButtons[2].onclick = function () {
-
-        window.location.href =
-            "../html/order-management.html";
-
-    };
-
-}
-
-
-/* ==========================================
-   LOGOUT
-========================================== */
-
-function logout() {
-
-    localStorage.removeItem(
-        "loggedInUser"
-    );
-
-    localStorage.removeItem(
-        "userRole"
-    );
-
-    localStorage.removeItem(
-        "rememberUser"
-    );
-
-    showToast(
-        "Logout successful."
-    );
-
-    setTimeout(() => {
-
-        window.location.href =
-            "../html/login.html";
-
-    }, 800);
-}
-
-if (logoutButton) {
-
-    logoutButton.addEventListener(
-        "click",
-        logout
-    );
-
-}
-
-
-/* ==========================================
-   TOAST MESSAGE
-========================================== */
-
-let toastTimer;
-
-function showToast(message) {
-
-    if (!toast) {
         return;
     }
 
-    clearTimeout(toastTimer);
+    const time =
+        new Date().toLocaleTimeString(
+            "en-IN",
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
 
-    toast.textContent = message;
+    elements.dataStatus.textContent =
+        `Live database - updated ${time}`;
 
-    toast.classList.add("show");
-
-    toastTimer = setTimeout(() => {
-
-        toast.classList.remove("show");
-
-    }, 2500);
+    elements.dataStatus.classList.remove(
+        "offline"
+    );
 }
 
 
 /* ==========================================
-   STATUS HELPERS
+   EMPLOYEE PROFILE
 ========================================== */
 
-function normalizeStatus(status) {
+function loadEmployeeProfile() {
+    const username =
+        localStorage.getItem("loggedInUser") ||
+        sessionStorage.getItem("loggedInUser") ||
+        "Employee";
 
-    return String(status || "")
-        .trim()
-        .toLowerCase();
+    const employeeName =
+        formatEmployeeName(username);
+
+    elements.employeeName.textContent =
+        employeeName;
+
+    elements.welcomeMessage.textContent =
+        `Welcome back, ${employeeName}! Have a productive shift.`;
 }
 
-function getStatusClass(status) {
 
-    const normalized =
-        normalizeStatus(status);
-
-    const allowedStatuses = [
-        "pending",
-        "preparing",
-        "ready",
-        "completed",
-        "cancelled"
-    ];
-
-    return allowedStatuses.includes(
-        normalized
-    )
-        ? normalized
-        : "pending";
+function formatEmployeeName(username) {
+    return String(username)
+        .replace(/[-_]/g, " ")
+        .replace(
+            /\b\w/g,
+            letter => letter.toUpperCase()
+        );
 }
 
 
 /* ==========================================
-   FORMAT CURRENCY
+   LIVE CLOCK
 ========================================== */
+
+function updateClock() {
+    const currentDate = new Date();
+
+    const time =
+        currentDate.toLocaleTimeString(
+            "en-IN",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true,
+                timeZone: "Asia/Kolkata"
+            }
+        );
+
+    const date =
+        currentDate.toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                timeZone: "Asia/Kolkata"
+            }
+        );
+
+    elements.liveClock.innerHTML = `
+        <div>${time}</div>
+        <small>${date}</small>
+    `;
+}
+
+
+/* ==========================================
+   FORMATTING
+========================================== */
+
+function formatTable(table) {
+    const value =
+        String(table || "");
+
+    return /^\d+$/.test(value)
+        ? `Table ${value}`
+        : value;
+}
+
+
+function formatItemCount(count) {
+    const number =
+        Number(count) || 0;
+
+    return `${number} item${
+        number === 1 ? "" : "s"
+    }`;
+}
+
 
 function formatMoney(amount) {
-
     return new Intl.NumberFormat(
         "en-IN",
         {
             style: "currency",
             currency: "INR",
-            maximumFractionDigits: 0
+            maximumFractionDigits: 2
         }
     ).format(
         Number(amount) || 0
@@ -531,12 +711,83 @@ function formatMoney(amount) {
 }
 
 
+function formatOrderTime(value) {
+    const date =
+        new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Recently added";
+    }
+
+    return date.toLocaleString(
+        "en-IN",
+        {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+function getOrderTime(order) {
+    const time =
+        new Date(order.createdAt)
+            .getTime();
+
+    return Number.isFinite(time)
+        ? time
+        : 0;
+}
+
+
 /* ==========================================
-   SECURITY: ESCAPE HTML
+   STATUS STYLING
+========================================== */
+
+function getStatusClass(status) {
+    const normalized =
+        normalizeStatus(status);
+
+    const allowedStatuses = [
+        "pending",
+        "preparing",
+        "ready",
+        "completed"
+    ];
+
+    return allowedStatuses.includes(normalized)
+        ? normalized
+        : "pending";
+}
+
+
+function getActivityIcon(status) {
+    const normalized =
+        normalizeStatus(status);
+
+    if (normalized === "completed") {
+        return "fa-circle-check";
+    }
+
+    if (normalized === "ready") {
+        return "fa-bell-concierge";
+    }
+
+    if (normalized === "preparing") {
+        return "fa-fire-burner";
+    }
+
+    return "fa-clock";
+}
+
+
+/* ==========================================
+   SECURITY HELPERS
 ========================================== */
 
 function escapeHTML(value) {
-
     const element =
         document.createElement("div");
 
@@ -547,52 +798,168 @@ function escapeHTML(value) {
 }
 
 
+function escapeAttribute(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+
 /* ==========================================
-   EMPLOYEE PROFILE
+   REFRESH BUTTON
 ========================================== */
 
-function loadEmployeeProfile() {
+function setRefreshLoading(isLoading) {
+    elements.refreshButton.disabled =
+        isLoading;
 
-    const employeeName =
-        document.querySelector(
-            ".employee-profile h3"
+    const icon =
+        elements.refreshButton
+            .querySelector("i");
+
+    if (icon) {
+        icon.classList.toggle(
+            "fa-spin",
+            isLoading
         );
-
-    const employeeRole =
-        document.querySelector(
-            ".employee-profile span"
-        );
-
-    const loggedInUser =
-        localStorage.getItem(
-            "loggedInUser"
-        );
-
-    if (
-        loggedInUser &&
-        employeeName
-    ) {
-        employeeName.textContent =
-            formatEmployeeName(
-                loggedInUser
-            );
-    }
-
-    if (employeeRole) {
-
-        employeeRole.textContent =
-            "Employee";
-
     }
 }
 
-function formatEmployeeName(username) {
 
-    return String(username)
-        .replace(/[-_]/g, " ")
-        .replace(/\b\w/g, (letter) =>
-            letter.toUpperCase()
-        );
+/* ==========================================
+   TOAST MESSAGE
+========================================== */
+
+function showToast(
+    message,
+    type = "success"
+) {
+    clearTimeout(toastTimer);
+
+    elements.toast.textContent =
+        message;
+
+    elements.toast.className =
+        `toast ${type} show`;
+
+    toastTimer =
+        setTimeout(() => {
+            elements.toast.classList.remove(
+                "show"
+            );
+        }, 2600);
+}
+
+
+/* ==========================================
+   LOGOUT
+========================================== */
+
+function logout() {
+    const loginKeys = [
+        "loggedInUser",
+        "userRole",
+        "isLoggedIn",
+        "employeeLoggedIn"
+    ];
+
+    loginKeys.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    });
+
+    window.location.href =
+        "role-selection.html";
+}
+
+
+/* ==========================================
+   PAGE EVENTS
+========================================== */
+
+function initializeEvents() {
+    elements.refreshButton.addEventListener(
+        "click",
+        function () {
+            refreshOrders(true);
+        }
+    );
+
+    elements.logoutButton.addEventListener(
+        "click",
+        logout
+    );
+
+    elements.sidebarLogoutButton.addEventListener(
+        "click",
+        function (event) {
+            event.preventDefault();
+            logout();
+        }
+    );
+
+    elements.newOrderButton.addEventListener(
+        "click",
+        function () {
+            window.location.href =
+                "menu.html";
+        }
+    );
+
+    elements.printButton.addEventListener(
+        "click",
+        function () {
+            window.location.href =
+                "billing-pos.html";
+        }
+    );
+
+    elements.viewOrdersButton.addEventListener(
+        "click",
+        function () {
+            document
+                .getElementById("liveOrders")
+                .scrollIntoView({
+                    behavior: "smooth"
+                });
+        }
+    );
+
+    elements.ordersTable.addEventListener(
+        "change",
+        function (event) {
+            const select =
+                event.target.closest(
+                    ".status-select"
+                );
+
+            if (select) {
+                updateOrderStatus(
+                    select.dataset.orderId,
+                    select.value,
+                    select
+                );
+            }
+        }
+    );
+
+    window.addEventListener(
+        "storage",
+        function (event) {
+            if (
+                event.key ===
+                ORDER_CACHE_KEY
+            ) {
+                orders =
+                    loadCachedOrders();
+
+                renderDashboard();
+            }
+        }
+    );
 }
 
 
@@ -600,40 +967,37 @@ function formatEmployeeName(username) {
    INITIALIZE DASHBOARD
 ========================================== */
 
+async function initializeDashboard() {
+    if (!checkEmployeeAccess()) {
+        return;
+    }
+
+    orders = loadCachedOrders();
+
+    loadEmployeeProfile();
+    updateClock();
+    renderDashboard();
+    initializeEvents();
+
+    window.setInterval(
+        updateClock,
+        1000
+    );
+
+    await refreshOrders(false);
+
+    window.setInterval(
+        function () {
+            if (!document.hidden) {
+                refreshOrders(false);
+            }
+        },
+        REFRESH_INTERVAL
+    );
+}
+
+
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
-
-        loadEmployeeProfile();
-
-        renderOrders();
-
-        setTimeout(() => {
-
-            showToast(
-                "Welcome back! Have a productive shift."
-            );
-
-        }, 500);
-
-    }
-);
-
-
-/* ==========================================
-   UPDATE DASHBOARD ACROSS TABS
-========================================== */
-
-window.addEventListener(
-    "storage",
-    function (event) {
-
-        if (
-            event.key ===
-            ORDER_STORAGE_KEY
-        ) {
-            renderOrders();
-        }
-
-    }
+    initializeDashboard
 );

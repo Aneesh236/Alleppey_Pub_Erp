@@ -5,6 +5,7 @@
 
 const ORDER_STORAGE_KEY = "pubOrders";
 const BILL_STORAGE_KEY = "pubBills";
+const LIVE_REFRESH_INTERVAL = 20000;
 
 let orders = [];
 let bills = [];
@@ -33,6 +34,15 @@ const orderFilterButtons =
 
 const availableOrderCount =
     document.getElementById("availableOrderCount");
+
+const orderDataStatus =
+    document.getElementById("orderDataStatus");
+
+const refreshOrdersBtn =
+    document.getElementById("refreshOrdersBtn");
+
+const backDashboardBtn =
+    document.getElementById("backDashboardBtn");
 
 
 /* =========================================
@@ -373,6 +383,199 @@ const defaultOrders = [
 
 
 /* =========================================
+   ACCESS AND LIVE API
+========================================= */
+
+function checkBillingAccess() {
+
+    const role = localStorage.getItem("userRole");
+
+    const employeeLoggedIn =
+        localStorage.getItem("employeeLoggedIn") === "true" ||
+        sessionStorage.getItem("employeeLoggedIn") === "true";
+
+    const adminLoggedIn =
+        localStorage.getItem("adminLoggedIn") === "true" ||
+        sessionStorage.getItem("adminLoggedIn") === "true";
+
+    const allowed =
+        (role === "employee" && employeeLoggedIn) ||
+        (role === "admin" && adminLoggedIn);
+
+    if (!allowed) {
+        window.location.replace("role-selection.html");
+    }
+
+    return allowed;
+
+}
+
+
+function getApiBaseUrl() {
+
+    const baseUrl =
+        String(window.PUB_API_BASE_URL || "")
+            .replace(/\/+$/, "");
+
+    if (!baseUrl) {
+        throw new Error("The backend URL is missing from config.js.");
+    }
+
+    return baseUrl;
+
+}
+
+
+async function apiRequest(path, options = {}) {
+
+    const response = await fetch(
+        `${getApiBaseUrl()}${path}`,
+        {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            ...options
+        }
+    );
+
+    let result = null;
+
+    try {
+        result = await response.json();
+    } catch (error) {
+        if (response.status !== 204) {
+            console.error("The server response could not be read.", error);
+        }
+    }
+
+    if (!response.ok) {
+        throw new Error(
+            result?.detail ||
+            `Server error ${response.status}`
+        );
+    }
+
+    return result;
+
+}
+
+
+async function refreshLiveOrders(showMessage = true) {
+
+    if (refreshOrdersBtn.disabled) {
+        return false;
+    }
+
+    refreshOrdersBtn.disabled = true;
+    refreshOrdersBtn.querySelector("i")
+        ?.classList.add("fa-spin");
+
+    try {
+
+        const [orderResult, billResult] =
+            await Promise.all([
+                apiRequest("/orders"),
+                apiRequest("/bills")
+            ]);
+
+        const manualOrders =
+            orders.filter(order => order.manual);
+
+        const liveOrders = Array.isArray(orderResult)
+            ? orderResult.map(normalizeOrder)
+            : [];
+
+        orders = [...manualOrders, ...liveOrders];
+
+        bills = Array.isArray(billResult)
+            ? billResult.map(normalizeBill)
+            : [];
+
+        saveOrders();
+        saveBills();
+
+        if (
+            selectedOrderId &&
+            !orders.some(order => order.id === selectedOrderId)
+        ) {
+            resetBillView();
+        }
+
+        renderOrders();
+        updateOrderDataStatus(false);
+
+        if (showMessage) {
+            showToast("Orders refreshed from the database.", "success");
+        }
+
+        return true;
+
+    } catch (error) {
+
+        console.error("Unable to load live orders.", error);
+        updateOrderDataStatus(true);
+
+        if (showMessage) {
+            showToast("Server unavailable. Showing saved orders.", "error");
+        }
+
+        return false;
+
+    } finally {
+
+        refreshOrdersBtn.disabled = false;
+        refreshOrdersBtn.querySelector("i")
+            ?.classList.remove("fa-spin");
+
+    }
+
+}
+
+
+async function saveBillToDatabase(bill) {
+
+    try {
+        const savedBill = await apiRequest(
+            "/bills",
+            {
+                method: "POST",
+                body: JSON.stringify(bill)
+            }
+        );
+
+        return normalizeBill(savedBill);
+    } catch (error) {
+        console.error("Unable to save the bill.", error);
+        showToast(
+            error.message || "The bill could not be saved to the database.",
+            "error"
+        );
+        return null;
+    }
+
+}
+
+
+function updateOrderDataStatus(usingCache) {
+
+    if (usingCache) {
+        orderDataStatus.textContent = "Saved orders - backend unavailable";
+        orderDataStatus.classList.add("offline");
+        return;
+    }
+
+    const time = new Date().toLocaleTimeString(
+        "en-IN",
+        { hour: "2-digit", minute: "2-digit" }
+    );
+
+    orderDataStatus.textContent = `Live - updated ${time}`;
+    orderDataStatus.classList.remove("offline");
+
+}
+
+
+/* =========================================
    LOAD DATA
 ========================================= */
 
@@ -394,24 +597,10 @@ function loadData() {
                 )
             );
 
-        if (
-            Array.isArray(savedOrders) &&
-            savedOrders.length > 0
-        ) {
-
-            orders = savedOrders.map(
-                normalizeOrder
-            );
-
-        } else {
-
-            orders = defaultOrders.map(
-                order => normalizeOrder(order)
-            );
-
-            saveOrders();
-
-        }
+        orders =
+            Array.isArray(savedOrders)
+                ? savedOrders.map(normalizeOrder)
+                : [];
 
         bills =
             Array.isArray(savedBills)
@@ -425,14 +614,10 @@ function loadData() {
             error
         );
 
-        orders =
-            defaultOrders.map(
-                order => normalizeOrder(order)
-            );
+        orders = [];
 
         bills = [];
 
-        saveOrders();
         saveBills();
 
     }
@@ -484,7 +669,11 @@ function normalizeOrder(order) {
         time:
             order.time ||
             order.createdAt ||
+            order.date ||
             new Date().toISOString(),
+
+        manual:
+            Boolean(order.manual),
 
         items:
             Array.isArray(order.items)
@@ -521,7 +710,7 @@ function normalizeBillItem(item) {
             Number(item.price) || 0,
 
         quantity:
-            Number(item.quantity) || 1,
+            Number(item.quantity ?? item.qty) || 1,
 
         notes:
             String(item.notes || "")
@@ -653,6 +842,15 @@ function renderOrders() {
     const filteredOrders =
         orders.filter(order => {
 
+            const orderStatus =
+                String(order.status)
+                    .trim()
+                    .toLowerCase();
+
+            const isAvailable =
+                !["completed", "cancelled", "paid"]
+                    .includes(orderStatus);
+
             const matchesSearch =
 
                 order.id
@@ -678,11 +876,12 @@ function renderOrders() {
 
                 ||
 
-                order.status ===
-                selectedOrderFilter;
+                orderStatus ===
+                selectedOrderFilter.toLowerCase();
 
 
             return (
+                isAvailable &&
                 matchesSearch &&
                 matchesStatus
             );
@@ -792,7 +991,7 @@ function renderOrders() {
                 </span>
 
                 <strong>
-                    ₹${formatMoney(orderTotal)}
+                    \u20B9${formatMoney(orderTotal)}
                 </strong>
 
             </div>
@@ -936,7 +1135,7 @@ function renderBillItems() {
 
 
             <td>
-                ₹${formatMoney(item.price)}
+                \u20B9${formatMoney(item.price)}
             </td>
 
 
@@ -970,7 +1169,7 @@ function renderBillItems() {
 
 
             <td>
-                ₹${formatMoney(itemTotal)}
+                \u20B9${formatMoney(itemTotal)}
             </td>
 
 
@@ -1433,6 +1632,9 @@ newBillForm.addEventListener(
                 new Date()
                     .toISOString(),
 
+            manual:
+                true,
+
             items: []
 
         };
@@ -1586,15 +1788,15 @@ function createBillObject(
 
 saveBillBtn.addEventListener(
     "click",
-    function () {
+    async function () {
 
-        saveCurrentBill();
+        await saveCurrentBill();
 
     }
 );
 
 
-function saveCurrentBill(
+async function saveCurrentBill(
     forcedStatus = null
 ) {
 
@@ -1656,6 +1858,23 @@ function saveCurrentBill(
         bill.createdAt =
             bills[existingBillIndex].createdAt;
 
+    }
+
+
+    const persistedBill =
+        await saveBillToDatabase(bill);
+
+
+    if (!persistedBill) {
+        return null;
+    }
+
+
+    Object.assign(bill, persistedBill);
+
+
+    if (existingBillIndex >= 0) {
+
         bills[existingBillIndex] =
             bill;
 
@@ -1683,7 +1902,7 @@ function saveCurrentBill(
 
         order.status =
             bill.paymentStatus === "Paid"
-                ? "Paid"
+                ? "Completed"
                 : order.status;
 
     }
@@ -1720,13 +1939,17 @@ function saveCurrentBill(
 
 markPaidBtn.addEventListener(
     "click",
-    function () {
+    async function () {
 
         paymentStatusSelect.value =
             "Paid";
 
+        markPaidBtn.disabled = true;
+
         const bill =
-            saveCurrentBill("Paid");
+            await saveCurrentBill("Paid");
+
+        markPaidBtn.disabled = false;
 
         if (!bill) {
 
@@ -1869,7 +2092,7 @@ function populateReceipt(bill) {
             </td>
 
             <td>
-                ₹${formatMoney(
+                \u20B9${formatMoney(
                     item.price *
                     item.quantity
                 )}
@@ -2008,7 +2231,7 @@ function renderBillingHistory() {
             </td>
 
             <td>
-                ₹${formatMoney(bill.total)}
+                \u20B9${formatMoney(bill.total)}
             </td>
 
             <td>
@@ -2179,7 +2402,7 @@ function openDeleteBillModal(billId) {
 
 confirmDeleteBillBtn.addEventListener(
     "click",
-    function () {
+    async function () {
 
         if (!selectedBillId) {
 
@@ -2187,12 +2410,23 @@ confirmDeleteBillBtn.addEventListener(
 
         }
 
-        bills =
-            bills.filter(
-                bill =>
-                    bill.id !==
-                    selectedBillId
+        try {
+            await apiRequest(
+                `/bills/${encodeURIComponent(selectedBillId)}`,
+                { method: "DELETE" }
             );
+        } catch (error) {
+            console.error("Unable to delete the bill.", error);
+            showToast(
+                error.message || "The billing record could not be deleted.",
+                "error"
+            );
+            return;
+        }
+
+        bills = bills.filter(
+            bill => bill.id !== selectedBillId
+        );
 
         saveBills();
 
@@ -2690,7 +2924,7 @@ function formatTime(value) {
 
     if (Number.isNaN(date.getTime())) {
 
-        return "—";
+        return "\u2014";
 
     }
 
@@ -2712,7 +2946,7 @@ function formatDateTime(value) {
 
     if (Number.isNaN(date.getTime())) {
 
-        return "—";
+        return "\u2014";
 
     }
 
@@ -2855,13 +3089,13 @@ function resetBillView() {
     selectedOrderTitle.textContent =
         "No Order Selected";
 
-    billCustomerName.textContent = "—";
+    billCustomerName.textContent = "\u2014";
 
-    billTableNumber.textContent = "—";
+    billTableNumber.textContent = "\u2014";
 
-    billOrderTime.textContent = "—";
+    billOrderTime.textContent = "\u2014";
 
-    billOrderType.textContent = "—";
+    billOrderType.textContent = "\u2014";
 
     paymentStatusSelect.value =
         "Pending";
@@ -2881,7 +3115,11 @@ function resetBillView() {
    INITIALIZE PAGE
 ========================================= */
 
-function initializeBillingPage() {
+async function initializeBillingPage() {
+
+    if (!checkBillingAccess()) {
+        return;
+    }
 
     loadData();
 
@@ -2893,7 +3131,45 @@ function initializeBillingPage() {
 
     updateStatistics();
 
+    updateOrderDataStatus(true);
+
+    await refreshLiveOrders(false);
+
+    window.setInterval(
+        function () {
+
+            if (!document.hidden) {
+                refreshLiveOrders(false);
+            }
+
+        },
+        LIVE_REFRESH_INTERVAL
+    );
+
 }
+
+
+backDashboardBtn.addEventListener(
+    "click",
+    function () {
+
+        const role = localStorage.getItem("userRole");
+
+        window.location.href =
+            role === "admin"
+                ? "admin-dashboard.html"
+                : "emp_dash.html";
+
+    }
+);
+
+
+refreshOrdersBtn.addEventListener(
+    "click",
+    function () {
+        refreshLiveOrders(true);
+    }
+);
 
 
 initializeBillingPage();

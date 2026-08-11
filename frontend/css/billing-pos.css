@@ -99,6 +99,10 @@ textarea {
 
 .header-right {
     justify-self: end;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .header-label {
@@ -187,6 +191,25 @@ textarea {
 
     box-shadow:
         0 10px 24px rgba(212, 175, 55, 0.25);
+}
+
+
+.refresh-orders-btn {
+    color: var(--gold);
+    background: transparent;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+}
+
+.refresh-orders-btn:hover {
+    color: #111111;
+    background: var(--gold);
+}
+
+.new-bill-btn:disabled,
+.mark-paid-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
 }
 
 
@@ -395,6 +418,24 @@ textarea {
     font-weight: 600;
 
     white-space: nowrap;
+}
+
+
+.order-panel-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+}
+
+.order-data-status {
+    color: var(--success);
+    font-size: 9px;
+    white-space: nowrap;
+}
+
+.order-data-status.offline {
+    color: var(--warning);
 }
 
 

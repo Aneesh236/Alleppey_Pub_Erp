@@ -1,35 +1,25 @@
-/* ==========================================
-   LOGIN.JS
-   Alleppey Pub ERP
-========================================== */
+/* Alleppey Pub ERP - role-based demo login */
 
 "use strict";
 
-
-/* ==========================================
-   DEMO USERS
-========================================== */
-
-const users = {
-
+const USERS = {
     employee: {
+        label: "Employee",
         username: "employee",
         password: "1234",
-        redirect: "emp_dash.html"
+        dashboard: "emp_dash.html",
+        icon: "fa-user-tie"
     },
 
     admin: {
+        label: "Administrator",
         username: "admin",
         password: "admin123",
-        redirect: "admin-dashboard.html"
+        dashboard: "admin-dashboard.html",
+        icon: "fa-user-shield"
     }
-
 };
 
-
-/* ==========================================
-   ELEMENTS
-========================================== */
 
 const loginForm = document.getElementById("loginForm");
 const usernameInput = document.getElementById("username");
@@ -42,28 +32,94 @@ const togglePasswordButton =
 const loginButton = document.getElementById("loginBtn");
 const loginButtonText = loginButton.querySelector("span");
 
-const toast = document.getElementById("toast");
-
 const forgotPasswordLink =
     document.getElementById("forgotPassword");
 
+const toast = document.getElementById("toast");
 
-/* ==========================================
-   TOAST
-========================================== */
+const roleTitle = document.getElementById("roleTitle");
+const roleMessage = document.getElementById("roleMessage");
+const roleBadge = document.getElementById("roleBadge");
+const roleIcon = document.getElementById("roleIcon");
+const roleName = document.getElementById("roleName");
+const demoLogin = document.getElementById("demoLogin");
+
 
 let toastTimer;
+let activeRole = "";
+
+
+/* ==========================================
+   GET SELECTED ROLE
+========================================== */
+
+function getSelectedRole() {
+    const urlParameters =
+        new URLSearchParams(window.location.search);
+
+    const urlRole = urlParameters.get("role");
+
+    const savedRole =
+        localStorage.getItem("selectedRole");
+
+    const role = urlRole || savedRole;
+
+    if (USERS[role]) {
+        return role;
+    }
+
+    return "";
+}
+
+
+/* ==========================================
+   SET UP LOGIN PAGE
+========================================== */
+
+function setupLoginPage() {
+    activeRole = getSelectedRole();
+
+    if (!activeRole) {
+        window.location.replace("role-selection.html");
+        return;
+    }
+
+    const user = USERS[activeRole];
+
+    localStorage.setItem("selectedRole", activeRole);
+
+    document.title =
+        `${user.label} Login | Alleppey Pub ERP`;
+
+    roleTitle.textContent =
+        `${user.label} Login`;
+
+    roleMessage.textContent =
+        `Enter your ${user.label.toLowerCase()} credentials`;
+
+    roleName.textContent = user.label;
+
+    roleIcon.className =
+        `fa-solid ${user.icon}`;
+
+    roleBadge.classList.add(activeRole);
+
+    demoLogin.textContent =
+        `${user.username} / ${user.password}`;
+
+    restoreRememberedUser();
+}
+
+
+/* ==========================================
+   TOAST MESSAGE
+========================================== */
 
 function showToast(message, type = "") {
-
     clearTimeout(toastTimer);
 
     toast.textContent = message;
-    toast.className = "";
-
-    if (type) {
-        toast.classList.add(type);
-    }
+    toast.className = type;
 
     requestAnimationFrame(() => {
         toast.classList.add("show");
@@ -72,87 +128,119 @@ function showToast(message, type = "") {
     toastTimer = setTimeout(() => {
         toast.classList.remove("show");
     }, 2800);
-
 }
 
 
 /* ==========================================
-   PASSWORD TOGGLE
+   INPUT ERRORS
 ========================================== */
-
-togglePasswordButton.addEventListener("click", () => {
-
-    const passwordIsHidden =
-        passwordInput.type === "password";
-
-    passwordInput.type =
-        passwordIsHidden ? "text" : "password";
-
-    const icon =
-        togglePasswordButton.querySelector("i");
-
-    icon.classList.toggle("fa-eye", !passwordIsHidden);
-    icon.classList.toggle("fa-eye-slash", passwordIsHidden);
-
-    togglePasswordButton.setAttribute(
-        "aria-label",
-        passwordIsHidden
-            ? "Hide password"
-            : "Show password"
-    );
-
-    passwordInput.focus();
-
-});
-
-
-/* ==========================================
-   INPUT ERROR HANDLING
-========================================== */
-
-function markInputError(input) {
-
-    input.classList.add("input-error");
-
-}
 
 function clearInputErrors() {
-
     usernameInput.classList.remove("input-error");
     passwordInput.classList.remove("input-error");
-
 }
-
-usernameInput.addEventListener("input", clearInputErrors);
-passwordInput.addEventListener("input", clearInputErrors);
 
 
 /* ==========================================
-   BUTTON LOADING STATE
+   LOADING BUTTON
 ========================================== */
 
 function setLoading(isLoading) {
-
     loginButton.disabled = isLoading;
 
-    if (isLoading) {
+    loginButtonText.textContent =
+        isLoading ? "Logging in..." : "Login";
 
-        loginButtonText.textContent = "Logging in...";
+    loginButton.querySelector("i").className =
+        isLoading
+            ? "fa-solid fa-spinner fa-spin"
+            : "fa-solid fa-right-to-bracket";
+}
 
-        loginButton
-            .querySelector("i")
-            .className = "fa-solid fa-spinner fa-spin";
 
+/* ==========================================
+   SAVE LOGIN SESSION
+========================================== */
+
+function saveSession(username) {
+    sessionStorage.removeItem("adminLoggedIn");
+    sessionStorage.removeItem("employeeLoggedIn");
+
+    sessionStorage.setItem(
+        "loggedInUser",
+        username
+    );
+
+    sessionStorage.setItem(
+        "userRole",
+        activeRole
+    );
+
+    sessionStorage.setItem(
+        "isLoggedIn",
+        "true"
+    );
+
+    sessionStorage.setItem(
+        `${activeRole}LoggedIn`,
+        "true"
+    );
+
+    localStorage.setItem(
+        "userRole",
+        activeRole
+    );
+
+    localStorage.setItem(
+        "loggedInUser",
+        username
+    );
+
+    localStorage.setItem(
+        `${activeRole}LoggedIn`,
+        "true"
+    );
+
+    const otherRole =
+        activeRole === "admin"
+            ? "employeeLoggedIn"
+            : "adminLoggedIn";
+
+    localStorage.removeItem(otherRole);
+}
+
+
+/* ==========================================
+   REMEMBER USERNAME
+========================================== */
+
+function saveRememberedUser(username) {
+    const storageKey =
+        `rememberUser_${activeRole}`;
+
+    if (rememberInput.checked) {
+        localStorage.setItem(
+            storageKey,
+            username
+        );
     } else {
-
-        loginButtonText.textContent = "Login";
-
-        loginButton
-            .querySelector("i")
-            .className = "fa-solid fa-right-to-bracket";
-
+        localStorage.removeItem(storageKey);
     }
+}
 
+
+function restoreRememberedUser() {
+    const rememberedUsername =
+        localStorage.getItem(
+            `rememberUser_${activeRole}`
+        );
+
+    if (rememberedUsername) {
+        usernameInput.value =
+            rememberedUsername;
+
+        rememberInput.checked = true;
+    }
 }
 
 
@@ -161,193 +249,148 @@ function setLoading(isLoading) {
 ========================================== */
 
 function login(event) {
-
     event.preventDefault();
 
     clearInputErrors();
 
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
-    const remember = rememberInput.checked;
+    const username =
+        usernameInput.value.trim();
 
-    const selectedRole =
-        document.querySelector(
-            'input[name="role"]:checked'
-        );
+    const password =
+        passwordInput.value;
 
-    // Validate role
-    if (!selectedRole) {
+    const user = USERS[activeRole];
 
-        showToast(
-            "Please select Employee or Administrator",
-            "error"
-        );
-
-        return;
-
-    }
-
-    // Validate username
     if (!username) {
-
-        markInputError(usernameInput);
+        usernameInput.classList.add("input-error");
+        usernameInput.focus();
 
         showToast(
             "Please enter your username",
             "error"
         );
 
-        usernameInput.focus();
-
         return;
-
     }
 
-    // Validate password
     if (!password) {
-
-        markInputError(passwordInput);
+        passwordInput.classList.add("input-error");
+        passwordInput.focus();
 
         showToast(
             "Please enter your password",
             "error"
         );
 
-        passwordInput.focus();
-
         return;
-
     }
 
-    const role = selectedRole.value;
-    const selectedUser = users[role];
-
-    if (!selectedUser) {
-
-        showToast(
-            "The selected role is not available",
-            "error"
-        );
-
-        return;
-
-    }
-
-    // Check credentials
     const usernameMatches =
         username.toLowerCase() ===
-        selectedUser.username.toLowerCase();
+        user.username.toLowerCase();
 
     const passwordMatches =
-        password === selectedUser.password;
+        password === user.password;
 
     if (!usernameMatches || !passwordMatches) {
-
-        markInputError(usernameInput);
-        markInputError(passwordInput);
+        usernameInput.classList.add("input-error");
+        passwordInput.classList.add("input-error");
 
         showToast(
-            "Invalid username or password",
+            `Invalid ${user.label.toLowerCase()} credentials`,
             "error"
         );
 
         return;
-
     }
 
     setLoading(true);
 
-    // Save current login session
-    sessionStorage.setItem("loggedInUser", username);
-    sessionStorage.setItem("userRole", role);
-    sessionStorage.setItem("isLoggedIn", "true");
-
-    // Remember only non-sensitive login information
-    if (remember) {
-
-        localStorage.setItem("rememberUser", username);
-        localStorage.setItem("rememberRole", role);
-
-    } else {
-
-        localStorage.removeItem("rememberUser");
-        localStorage.removeItem("rememberRole");
-
-    }
+    saveSession(username);
+    saveRememberedUser(username);
 
     showToast(
-        `Welcome, ${username}! Login successful.`,
+        `Welcome, ${username}!`,
         "success"
     );
 
     setTimeout(() => {
-
-        window.location.href = selectedUser.redirect;
-
-    }, 1000);
-
+        window.location.href =
+            user.dashboard;
+    }, 700);
 }
 
 
 /* ==========================================
-   RESTORE REMEMBERED USER
+   PASSWORD VISIBILITY
 ========================================== */
 
-function restoreRememberedUser() {
+togglePasswordButton.addEventListener(
+    "click",
+    () => {
+        const isHidden =
+            passwordInput.type === "password";
 
-    const rememberedUsername =
-        localStorage.getItem("rememberUser");
+        passwordInput.type =
+            isHidden ? "text" : "password";
 
-    const rememberedRole =
-        localStorage.getItem("rememberRole");
+        const icon =
+            togglePasswordButton.querySelector("i");
 
-    if (rememberedUsername) {
+        icon.className =
+            isHidden
+                ? "fa-solid fa-eye-slash"
+                : "fa-solid fa-eye";
 
-        usernameInput.value = rememberedUsername;
-        rememberInput.checked = true;
+        togglePasswordButton.setAttribute(
+            "aria-label",
+            isHidden
+                ? "Hide password"
+                : "Show password"
+        );
 
+        passwordInput.focus();
     }
-
-    if (rememberedRole) {
-
-        const roleInput =
-            document.querySelector(
-                `input[name="role"][value="${rememberedRole}"]`
-            );
-
-        if (roleInput) {
-            roleInput.checked = true;
-        }
-
-    }
-
-}
+);
 
 
 /* ==========================================
    FORGOT PASSWORD
 ========================================== */
 
-forgotPasswordLink.addEventListener("click", event => {
+forgotPasswordLink.addEventListener(
+    "click",
+    event => {
+        event.preventDefault();
 
-    event.preventDefault();
-
-    showToast(
-        "Password recovery is unavailable in this demo.",
-        "error"
-    );
-
-});
+        showToast(
+            "Password recovery is unavailable in this demo.",
+            "error"
+        );
+    }
+);
 
 
 /* ==========================================
    EVENTS
 ========================================== */
 
-loginForm.addEventListener("submit", login);
+usernameInput.addEventListener(
+    "input",
+    clearInputErrors
+);
 
-window.addEventListener("DOMContentLoaded", () => {
+passwordInput.addEventListener(
+    "input",
+    clearInputErrors
+);
 
-    restoreRememberedUser();
+loginForm.addEventListener(
+    "submit",
+    login
+);
 
-});
+window.addEventListener(
+    "DOMContentLoaded",
+    setupLoginPage
+);

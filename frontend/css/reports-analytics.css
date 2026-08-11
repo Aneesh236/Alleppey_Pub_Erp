@@ -252,6 +252,17 @@ select {
     font-size: 22px;
 }
 
+.report-data-status {
+    margin-top: 5px;
+    color: var(--success);
+    font-size: 10px;
+    white-space: nowrap;
+}
+
+.report-data-status.offline {
+    color: var(--warning);
+}
+
 .date-filter-group {
     display: flex;
     align-items: center;
@@ -2037,4 +2048,10 @@ select {
         right: 14px;
         bottom: 14px;
     }
+}
+
+.refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+    transform: none;
 }

@@ -42,7 +42,7 @@
 
             <button type="button"
                     class="back-btn"
-                    onclick="window.location.href='../html/admin-dashboard.html'">
+                    id="backDashboardBtn">
 
                 <i class="fa-solid fa-arrow-left"></i>
 
@@ -69,6 +69,16 @@
 
 
         <div class="header-right">
+
+            <button type="button"
+                    class="new-bill-btn refresh-orders-btn"
+                    id="refreshOrdersBtn">
+
+                <i class="fa-solid fa-rotate-right"></i>
+
+                Refresh Orders
+
+            </button>
 
             <button type="button"
                     class="new-bill-btn"
@@ -227,12 +237,21 @@
 
                     </div>
 
-                    <span class="order-count"
-                          id="availableOrderCount">
+                    <div class="order-panel-meta">
 
-                        0 Orders
+                        <span class="order-count"
+                              id="availableOrderCount">
 
-                    </span>
+                            0 Orders
+
+                        </span>
+
+                        <small class="order-data-status"
+                               id="orderDataStatus">
+                            Connecting...
+                        </small>
+
+                    </div>
 
                 </div>
 
@@ -276,9 +295,9 @@
 
                     <button type="button"
                             class="order-filter-btn"
-                            data-status="Paid">
+                            data-status="Preparing">
 
-                        Paid
+                        Preparing
 
                     </button>
 
@@ -1525,6 +1544,7 @@
          JAVASCRIPT
     ========================================== -->
 
+    <script src="../js/config.js"></script>
     <script src="../js/billing-pos.js"></script>
 
 </body>
