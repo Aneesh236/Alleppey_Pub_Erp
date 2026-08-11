@@ -19,30 +19,56 @@ let appliedCoupon = "";
    HTML ELEMENTS
 ========================================= */
 
-const checkoutItems = document.getElementById("checkoutItems");
-const summaryItemCount = document.getElementById("summaryItemCount");
+const checkoutItems =
+    document.getElementById("checkoutItems");
 
-const subtotalElement = document.getElementById("subtotal");
-const discountElement = document.getElementById("discount");
-const gstAmountElement = document.getElementById("gstAmount");
-const serviceChargeElement = document.getElementById("serviceCharge");
-const grandTotalElement = document.getElementById("grandTotal");
+const summaryItemCount =
+    document.getElementById("summaryItemCount");
 
-const customerNameInput = document.getElementById("customerName");
-const customerPhoneInput = document.getElementById("customerPhone");
-const tableNumberInput = document.getElementById("tableNumber");
-const notesInput = document.getElementById("notes");
+const subtotalElement =
+    document.getElementById("subtotal");
 
-const couponInput = document.getElementById("couponInput");
-const applyCouponBtn = document.getElementById("applyCoupon");
-const couponMessage = document.getElementById("couponMessage");
+const discountElement =
+    document.getElementById("discount");
 
-const placeOrderBtn = document.getElementById("placeOrderBtn");
-const emptyCheckoutTemplate = document.getElementById(
-    "emptyCheckoutTemplate"
-);
+const gstAmountElement =
+    document.getElementById("gstAmount");
 
-const toast = document.getElementById("toast");
+const serviceChargeElement =
+    document.getElementById("serviceCharge");
+
+const grandTotalElement =
+    document.getElementById("grandTotal");
+
+const customerNameInput =
+    document.getElementById("customerName");
+
+const customerPhoneInput =
+    document.getElementById("customerPhone");
+
+const tableNumberInput =
+    document.getElementById("tableNumber");
+
+const notesInput =
+    document.getElementById("notes");
+
+const couponInput =
+    document.getElementById("couponInput");
+
+const applyCouponBtn =
+    document.getElementById("applyCoupon");
+
+const couponMessage =
+    document.getElementById("couponMessage");
+
+const placeOrderBtn =
+    document.getElementById("placeOrderBtn");
+
+const emptyCheckoutTemplate =
+    document.getElementById("emptyCheckoutTemplate");
+
+const toast =
+    document.getElementById("toast");
 
 
 /* =========================================
@@ -60,7 +86,6 @@ function loadCart() {
         if (!Array.isArray(storedCart)) {
 
             cart = [];
-
             return;
 
         }
@@ -73,7 +98,10 @@ function loadCart() {
 
     } catch (error) {
 
-        console.error("Unable to load cart:", error);
+        console.error(
+            "Unable to load cart:",
+            error
+        );
 
         cart = [];
 
@@ -160,7 +188,6 @@ function renderCheckoutItems() {
     if (cart.length === 0) {
 
         showEmptyCheckout();
-
         updateTotals();
 
         placeOrderBtn.disabled = true;
@@ -177,7 +204,8 @@ function renderCheckoutItems() {
         const checkoutItem =
             document.createElement("div");
 
-        checkoutItem.className = "checkout-item";
+        checkoutItem.className =
+            "checkout-item";
 
         checkoutItem.innerHTML = `
 
@@ -200,14 +228,14 @@ function renderCheckoutItems() {
             </div>
 
             <span class="checkout-item-price">
-
                 ₹${formatMoney(itemTotal)}
-
             </span>
 
         `;
 
-        checkoutItems.appendChild(checkoutItem);
+        checkoutItems.appendChild(
+            checkoutItem
+        );
 
     });
 
@@ -270,7 +298,7 @@ function calculateSubtotal() {
 
 
 /* =========================================
-   CALCULATE TOTAL ITEM QUANTITY
+   CALCULATE ITEM COUNT
 ========================================= */
 
 function calculateItemCount() {
@@ -301,19 +329,25 @@ function calculateGST(subtotalAfterDiscount) {
 
 function updateTotals() {
 
-    const subtotal = calculateSubtotal();
+    const subtotal =
+        calculateSubtotal();
 
-    // Automatically apply 20% discount
-    discountAmount = subtotal * DISCOUNT_RATE;
+    discountAmount =
+        subtotal * DISCOUNT_RATE;
 
     const subtotalAfterDiscount =
-        Math.max(0, subtotal - discountAmount);
+        Math.max(
+            0,
+            subtotal - discountAmount
+        );
 
     const gstAmount =
         calculateGST(subtotalAfterDiscount);
 
     const serviceCharge =
-        cart.length > 0 ? SERVICE_CHARGE : 0;
+        cart.length > 0
+            ? SERVICE_CHARGE
+            : 0;
 
     const grandTotal =
         subtotalAfterDiscount +
@@ -325,7 +359,9 @@ function updateTotals() {
 
     summaryItemCount.textContent =
         `${itemQuantity} ${
-            itemQuantity === 1 ? "Item" : "Items"
+            itemQuantity === 1
+                ? "Item"
+                : "Items"
         }`;
 
     subtotalElement.textContent =
@@ -342,11 +378,12 @@ function updateTotals() {
 
     grandTotalElement.textContent =
         formatMoney(grandTotal);
+
 }
 
 
 /* =========================================
-   APPLY COUPON
+   APPLY COUPON EVENTS
 ========================================= */
 
 applyCouponBtn.addEventListener(
@@ -371,7 +408,7 @@ couponInput.addEventListener(
 
 
 /* =========================================
-   COUPON FUNCTION
+   APPLY COUPON
 ========================================= */
 
 function applyCoupon() {
@@ -415,7 +452,6 @@ function applyCoupon() {
 
             break;
 
-
         case "HAPPY20":
 
             discountAmount =
@@ -430,7 +466,6 @@ function applyCoupon() {
             );
 
             break;
-
 
         case "SAVE50":
 
@@ -447,7 +482,6 @@ function applyCoupon() {
 
             break;
 
-
         case "":
 
             showCouponMessage(
@@ -456,7 +490,6 @@ function applyCoupon() {
             );
 
             break;
-
 
         default:
 
@@ -478,7 +511,8 @@ function applyCoupon() {
 
 function showCouponMessage(message, type) {
 
-    couponMessage.textContent = message;
+    couponMessage.textContent =
+        message;
 
     couponMessage.classList.remove(
         "success",
@@ -491,7 +525,7 @@ function showCouponMessage(message, type) {
 
 
 /* =========================================
-   ORDER TYPE CHANGE
+   ORDER TYPE EVENTS
 ========================================= */
 
 document
@@ -508,6 +542,10 @@ document
     });
 
 
+/* =========================================
+   HANDLE ORDER TYPE
+========================================= */
+
 function handleOrderTypeChange() {
 
     const selectedOrderType =
@@ -516,7 +554,6 @@ function handleOrderTypeChange() {
     if (selectedOrderType === "Takeaway") {
 
         tableNumberInput.value = "";
-
         tableNumberInput.disabled = true;
 
         tableNumberInput.placeholder =
@@ -584,7 +621,6 @@ function validateCheckout() {
     const paymentMethod =
         getSelectedRadioValue("payment");
 
-
     if (
         phone !== "" &&
         !/^[0-9]{10}$/.test(phone)
@@ -600,7 +636,6 @@ function validateCheckout() {
         return false;
 
     }
-
 
     if (
         orderType === "Dine In" &&
@@ -618,7 +653,6 @@ function validateCheckout() {
 
     }
 
-
     if (!paymentMethod) {
 
         showToast(
@@ -629,7 +663,6 @@ function validateCheckout() {
         return false;
 
     }
-
 
     if (customerName.length > 50) {
 
@@ -650,7 +683,69 @@ function validateCheckout() {
 
 
 /* =========================================
-   PLACE ORDER
+   SAVE ORDER TO FASTAPI SERVER
+========================================= */
+
+async function saveOrderToServer(order) {
+
+    const apiBaseUrl = String(
+        window.PUB_API_BASE_URL || ""
+    ).replace(/\/+$/, "");
+
+    if (!apiBaseUrl) {
+
+        throw new Error(
+            "The backend URL is missing from config.js."
+        );
+
+    }
+
+    const response = await fetch(
+        `${apiBaseUrl}/orders`,
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(order)
+        }
+    );
+
+    let result = null;
+
+    try {
+
+        result = await response.json();
+
+    } catch (error) {
+
+        console.error(
+            "The server returned an unreadable response.",
+            error
+        );
+
+    }
+
+    if (!response.ok) {
+
+        const serverMessage =
+            result?.detail ||
+            result?.message ||
+            `Server error ${response.status}`;
+
+        throw new Error(serverMessage);
+
+    }
+
+    return result;
+
+}
+
+
+/* =========================================
+   PLACE ORDER EVENT
 ========================================= */
 
 placeOrderBtn.addEventListener(
@@ -658,6 +753,10 @@ placeOrderBtn.addEventListener(
     placeOrder
 );
 
+
+/* =========================================
+   PLACE ORDER
+========================================= */
 
 async function placeOrder() {
 
@@ -677,26 +776,30 @@ async function placeOrder() {
 
     `;
 
+    const subtotal =
+        calculateSubtotal();
 
-    const subtotal = calculateSubtotal();
+    discountAmount =
+        subtotal * DISCOUNT_RATE;
 
-// Apply 20% discount
-discountAmount = subtotal * DISCOUNT_RATE;
+    const subtotalAfterDiscount =
+        Math.max(
+            0,
+            subtotal - discountAmount
+        );
 
-const subtotalAfterDiscount =
-    Math.max(0, subtotal - discountAmount);
+    const gstAmount =
+        calculateGST(subtotalAfterDiscount);
 
-const gstAmount =
-    calculateGST(subtotalAfterDiscount);
+    const serviceCharge =
+        cart.length > 0
+            ? SERVICE_CHARGE
+            : 0;
 
-const serviceCharge =
-    cart.length > 0 ? SERVICE_CHARGE : 0;
-
-const grandTotal =
-    subtotalAfterDiscount +
-    gstAmount +
-    serviceCharge;
-
+    const grandTotal =
+        subtotalAfterDiscount +
+        gstAmount +
+        serviceCharge;
 
     const orders =
         loadExistingOrders();
@@ -704,17 +807,16 @@ const grandTotal =
     const orderId =
         generateOrderId(orders);
 
-
     const customerName =
         customerNameInput.value.trim() ||
         "Walk-in Customer";
-
 
     const newOrder = {
 
         id: orderId,
 
-        customer: customerName,
+        customer:
+            customerName,
 
         phone:
             customerPhoneInput.value.trim() ||
@@ -736,9 +838,11 @@ const grandTotal =
 
             return {
 
-                id: item.id,
+                id:
+                    item.id,
 
-                name: item.name,
+                name:
+                    item.name,
 
                 description:
                     item.description,
@@ -773,8 +877,7 @@ const grandTotal =
             ),
 
         coupon:
-            appliedCoupon ||
-            "None",
+            appliedCoupon || "None",
 
         gst:
             Number(
@@ -818,61 +921,62 @@ const grandTotal =
 
     };
 
-
     let persistedOrder;
 
     try {
 
-        persistedOrder = await PubAPI.orders.create(newOrder);
+        persistedOrder =
+            await saveOrderToServer(newOrder);
 
     } catch (error) {
 
-        console.error("Order could not be saved to the database.", error);
+        console.error(
+            "Order could not be saved to the database.",
+            error
+        );
 
         showToast(
-            error.message || "The order could not reach the server. Please try again.",
+            error.message ||
+            "The order could not reach the server. Please try again.",
             "error"
         );
 
         placeOrderBtn.disabled = false;
+
         placeOrderBtn.innerHTML = `
+
             <i class="fa-solid fa-check"></i>
+
             Place Order
+
         `;
 
         return;
 
     }
 
-
     orders.push(persistedOrder);
-
 
     localStorage.setItem(
         ORDER_STORAGE_KEY,
         JSON.stringify(orders)
     );
 
-
     localStorage.setItem(
         LATEST_ORDER_KEY,
         JSON.stringify(persistedOrder)
     );
 
-
     localStorage.removeItem(
         CART_STORAGE_KEY
     );
 
-
     cart = [];
-
 
     showToast(
         `Order #${persistedOrder.id} placed successfully.`,
         "success"
     );
-
 
     setTimeout(() => {
 
@@ -931,13 +1035,20 @@ function generateOrderId(orders) {
 
     const validOrderIds =
         orders
-            .map((order) =>
-                Number(order.id)
-            )
+            .map((order) => {
+
+                const match =
+                    String(order.id)
+                        .match(/(\d+)$/);
+
+                return match
+                    ? Number(match[1])
+                    : null;
+
+            })
             .filter((id) =>
                 Number.isFinite(id)
             );
-
 
     if (validOrderIds.length === 0) {
 
@@ -945,7 +1056,9 @@ function generateOrderId(orders) {
 
     }
 
-    return Math.max(...validOrderIds) + 1;
+    return Math.max(
+        ...validOrderIds
+    ) + 1;
 
 }
 
@@ -956,10 +1069,10 @@ function generateOrderId(orders) {
 
 let toastTimer;
 
-
 function showToast(message, type = "") {
 
-    toast.textContent = message;
+    toast.textContent =
+        message;
 
     toast.classList.remove(
         "show",
@@ -967,19 +1080,15 @@ function showToast(message, type = "") {
         "error"
     );
 
-
     if (type) {
 
         toast.classList.add(type);
 
     }
 
-
     toast.classList.add("show");
 
-
     clearTimeout(toastTimer);
-
 
     toastTimer = setTimeout(() => {
 
@@ -1019,7 +1128,7 @@ function escapeAttribute(value) {
 
 
 /* =========================================
-   INITIALIZE CHECKOUT PAGE
+   INITIALIZE CHECKOUT
 ========================================= */
 
 function initializeCheckout() {
