@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Generator
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, create_engine, select
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship, sessionmaker
 
 
@@ -64,6 +64,40 @@ class InventoryItem(Base):
     cost_per_unit: Mapped[float] = mapped_column(Float, default=0)
     supplier: Mapped[str] = mapped_column(String(160), default="Not specified")
     notes: Mapped[str] = mapped_column(Text, default="")
+
+
+class StaffUser(Base):
+    __tablename__ = "staff_users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(
+        String(80), unique=True, index=True
+    )
+    password_hash: Mapped[str] = mapped_column(String(500))
+    role: Mapped[str] = mapped_column(String(40), index=True)
+    display_name: Mapped[str] = mapped_column(String(120))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    actor_username: Mapped[str] = mapped_column(String(80), index=True)
+    actor_role: Mapped[str] = mapped_column(String(40), index=True)
+    action: Mapped[str] = mapped_column(String(80), index=True)
+    entity_type: Mapped[str] = mapped_column(String(80), index=True)
+    entity_id: Mapped[str] = mapped_column(String(80), default="")
+    details: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
 
 
 class Order(Base):

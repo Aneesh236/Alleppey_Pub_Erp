@@ -87,3 +87,26 @@ class BillPayload(BaseModel):
     paymentStatus: str = Field(default="Pending", min_length=1, max_length=40)
     notes: str = ""
     createdAt: datetime | None = None
+
+
+class LoginPayload(BaseModel):
+    username: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=1, max_length=200)
+    role: str = Field(min_length=1, max_length=40)
+
+
+class StaffCreatePayload(BaseModel):
+    username: str = Field(min_length=3, max_length=80)
+    password: str = Field(min_length=8, max_length=200)
+    displayName: str = Field(min_length=1, max_length=120)
+    role: str = Field(default="employee", min_length=1, max_length=40)
+
+
+class StaffUpdatePayload(BaseModel):
+    displayName: str = Field(min_length=1, max_length=120)
+    role: str = Field(min_length=1, max_length=40)
+    isActive: bool = True
+
+
+class StaffPasswordPayload(BaseModel):
+    password: str = Field(min_length=8, max_length=200)

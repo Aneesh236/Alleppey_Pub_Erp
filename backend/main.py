@@ -2,45 +2,109 @@
 
 from collections import Counter, defaultdict
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+import os
 import re
 from typing import Any
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+import jwt
+from jwt.exceptions import InvalidTokenError
+from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import (
+    AuditLog,
     Bill,
     BillItem,
     InventoryItem,
     MenuItem,
     Order,
     OrderItem,
+    StaffUser,
+    SessionLocal,
     get_db,
     init_database,
 )
 from schemas import (
     BillPayload,
     InventoryItemPayload,
+    LoginPayload,
     MenuItemPayload,
     OrderPayload,
     OrderStatusPayload,
+    StaffCreatePayload,
+    StaffPasswordPayload,
+    StaffUpdatePayload,
 )
+
+
+load_dotenv()
+
+
+PASSWORD_HASH = PasswordHash.recommended()
+DUMMY_PASSWORD_HASH = PASSWORD_HASH.hash("invalid-login-placeholder")
+TOKEN_ALGORITHM = "HS256"
+TOKEN_LIFETIME_HOURS = 8
+BEARER_SCHEME = HTTPBearer(auto_error=False)
+
+
+def seed_staff_users() -> None:
+    configured_users = [
+        {
+            "username": os.getenv("ADMIN_USERNAME", "admin").strip(),
+            "password": os.getenv("ADMIN_PASSWORD", ""),
+            "role": "admin",
+            "display_name": os.getenv("ADMIN_DISPLAY_NAME", "Administrator").strip(),
+        },
+        {
+            "username": os.getenv("EMPLOYEE_USERNAME", "employee").strip(),
+            "password": os.getenv("EMPLOYEE_PASSWORD", ""),
+            "role": "employee",
+            "display_name": os.getenv("EMPLOYEE_DISPLAY_NAME", "Employee").strip(),
+        },
+    ]
+
+    with SessionLocal() as db:
+        for configured_user in configured_users:
+            if not configured_user["password"]:
+                continue
+
+            existing_user = db.scalar(
+                select(StaffUser).where(
+                    StaffUser.username == configured_user["username"]
+                )
+            )
+            if existing_user is None:
+                db.add(
+                    StaffUser(
+                        username=configured_user["username"],
+                        password_hash=PASSWORD_HASH.hash(
+                            configured_user["password"]
+                        ),
+                        role=configured_user["role"],
+                        display_name=configured_user["display_name"],
+                    )
+                )
+        db.commit()
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_database()
+    seed_staff_users()
     yield
 
 
 app = FastAPI(
     title="Alleppey Pub ERP API",
     description="Database, ordering, inventory and analytics API.",
-    version="4.0.0",
+    version="5.3.0",
     lifespan=lifespan,
 )
 
@@ -74,7 +138,7 @@ def text_value(*values: Any) -> str:
 
 
 def money(value: float) -> str:
-    return f"â‚¹{value:,.0f}"
+    return f"₹{value:,.0f}"
 
 
 def item_name(item: dict[str, Any]) -> str:
@@ -366,7 +430,7 @@ def customer_answer(question: str) -> str:
         for phrase in ("non-alcohol", "without alcohol", "mocktail", "virgin")
     ):
         return (
-            "Try a Virgin Mojitoâ€”lime, mint, sugar and soda, with no alcohol. "
+            "Try a Virgin Mojito—lime, mint, sugar and soda, with no alcohol. "
             "Ask the team about today's fresh mocktail options too."
         )
     if any(
@@ -390,22 +454,22 @@ def customer_answer(question: str) -> str:
         for word in ("cocktail", "mojito", "margarita")
     ):
         return (
-            "For something fresh, choose the Mojito (â‚¹280). For a stronger "
-            "citrus profile, try the Margarita (â‚¹350)."
+            "For something fresh, choose the Mojito (₹280). For a stronger "
+            "citrus profile, try the Margarita (₹350)."
         )
     if "beer" in query or "lager" in query:
         return (
-            "I recommend the Lager Beer (â‚¹220): crisp, refreshing, and an easy "
+            "I recommend the Lager Beer (₹220): crisp, refreshing, and an easy "
             "match with Chicken Wings or the Pub Burger."
         )
     if "spicy" in query or "wing" in query:
         return (
-            "Choose the Chicken Wings (â‚¹320). They are the spicy snack pick and "
+            "Choose the Chicken Wings (₹320). They are the spicy snack pick and "
             "pair especially well with a cold Lager Beer."
         )
     if any(word in query for word in ("burger", "filling", "hungry")):
         return (
-            "The Pub Burger (â‚¹420) is the most filling choice. Pair it with "
+            "The Pub Burger (₹420) is the most filling choice. Pair it with "
             "Lager Beer, or a Mojito for something fresh."
         )
     if "vegetarian" in query or "veg" in query:
@@ -423,35 +487,107 @@ def customer_answer(question: str) -> str:
         ("Pub Burger", 420),
     ]
     budget_match = re.search(
-        r"(?:under|below|within|budget)\s*â‚¹?\s*(\d+)",
+        r"(?:under|below|within|budget)\s*₹?\s*(\d+)",
         query,
     )
     if budget_match:
         budget = int(budget_match.group(1))
         choices = [
-            f"{name} (â‚¹{price})"
+            f"{name} (₹{price})"
             for name, price in menu
             if price <= budget
         ]
         return (
-            f"Within â‚¹{budget}, you can choose {', '.join(choices)}."
+            f"Within ₹{budget}, you can choose {', '.join(choices)}."
             if choices
             else (
-                f"I do not have a listed item below â‚¹{budget}. "
+                f"I do not have a listed item below ₹{budget}. "
                 "Ask the team about small snacks or current offers."
             )
         )
     if "price" in query or "cost" in query or "menu" in query:
         return (
-            "Popular prices: Lager Beer â‚¹220, Mojito â‚¹280, Chicken Wings â‚¹320, "
-            "Margarita â‚¹350, Grilled Chicken â‚¹380, and Pub Burger â‚¹420."
+            "Popular prices: Lager Beer ₹220, Mojito ₹280, Chicken Wings ₹320, "
+            "Margarita ₹350, Grilled Chicken ₹380, and Pub Burger ₹420."
         )
 
     return (
         "I can help with beer and cocktail recommendations, food pairings, "
         "prices, dietary choices, and today's specials. Try asking "
-        "'What can I get under â‚¹350?'"
+        "'What can I get under ₹350?'"
     )
+
+
+def get_jwt_secret() -> str:
+    secret = os.getenv("JWT_SECRET", "")
+    if len(secret) < 32:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Authentication is not configured on the server.",
+        )
+    return secret
+
+
+def create_access_token(user: StaffUser) -> str:
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(hours=TOKEN_LIFETIME_HOURS)
+    return jwt.encode(
+        {
+            "sub": user.username,
+            "role": user.role,
+            "name": user.display_name,
+            "iat": now,
+            "exp": expires_at,
+        },
+        get_jwt_secret(),
+        algorithm=TOKEN_ALGORITHM,
+    )
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(BEARER_SCHEME),
+    db: Session = Depends(get_db),
+) -> StaffUser:
+    authentication_error = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Your login session is invalid or has expired.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise authentication_error
+
+    try:
+        payload = jwt.decode(
+            credentials.credentials,
+            get_jwt_secret(),
+            algorithms=[TOKEN_ALGORITHM],
+        )
+        username = str(payload.get("sub", "")).strip()
+    except InvalidTokenError as error:
+        raise authentication_error from error
+
+    user = db.scalar(
+        select(StaffUser).where(StaffUser.username == username)
+    )
+    if user is None or not user.is_active:
+        raise authentication_error
+    return user
+
+
+def require_roles(*allowed_roles: str):
+    """Allow only logged-in staff members with one of the listed roles."""
+    allowed = {role.lower() for role in allowed_roles}
+
+    def check_role(user: StaffUser = Depends(get_current_user)) -> StaffUser:
+        if user.role.lower() not in allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to perform this action.",
+            )
+        return user
+
+    return check_role
 
 
 @app.get("/")
@@ -473,6 +609,230 @@ def health() -> dict[str, str]:
 @app.get("/api/health")
 def api_health() -> dict[str, str]:
     return health()
+
+
+@app.post("/api/auth/login")
+def login(
+    payload: LoginPayload,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    username = payload.username.strip()
+    requested_role = payload.role.strip().lower()
+    user = db.scalar(
+        select(StaffUser).where(StaffUser.username == username)
+    )
+
+    password_valid = PASSWORD_HASH.verify(
+        payload.password,
+        user.password_hash if user is not None else DUMMY_PASSWORD_HASH,
+    )
+    valid_login = (
+        user is not None
+        and user.is_active
+        and user.role == requested_role
+        and password_valid
+    )
+    if not valid_login:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username, password or role.",
+        )
+
+    return {
+        "accessToken": create_access_token(user),
+        "tokenType": "Bearer",
+        "expiresIn": TOKEN_LIFETIME_HOURS * 60 * 60,
+        "user": {
+            "username": user.username,
+            "displayName": user.display_name,
+            "role": user.role,
+        },
+    }
+
+
+@app.get("/api/auth/me")
+def current_user(user: StaffUser = Depends(get_current_user)) -> dict[str, str]:
+    return {
+        "username": user.username,
+        "displayName": user.display_name,
+        "role": user.role,
+    }
+
+
+def serialize_staff_user(user: StaffUser) -> dict[str, Any]:
+    created_at = user.created_at or datetime.now(timezone.utc)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "displayName": user.display_name,
+        "role": user.role,
+        "isActive": user.is_active,
+        "createdAt": created_at.isoformat(),
+    }
+
+
+def validate_staff_role(role: str) -> str:
+    normalized_role = role.strip().lower()
+    if normalized_role not in {"admin", "employee"}:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Role must be admin or employee.",
+        )
+    return normalized_role
+
+
+def record_audit(
+    db: Session,
+    user: StaffUser,
+    action: str,
+    entity_type: str,
+    entity_id: Any = "",
+    details: str = "",
+) -> None:
+    db.add(
+        AuditLog(
+            actor_username=user.username,
+            actor_role=user.role,
+            action=action,
+            entity_type=entity_type,
+            entity_id=str(entity_id or ""),
+            details=details,
+        )
+    )
+    db.commit()
+
+
+def serialize_audit_log(log: AuditLog) -> dict[str, Any]:
+    created_at = log.created_at or datetime.now(timezone.utc)
+    return {
+        "id": log.id,
+        "actorUsername": log.actor_username,
+        "actorRole": log.actor_role,
+        "action": log.action,
+        "entityType": log.entity_type,
+        "entityId": log.entity_id,
+        "details": log.details,
+        "createdAt": created_at.isoformat(),
+    }
+
+
+@app.get("/api/audit-logs")
+def list_audit_logs(
+    db: Session = Depends(get_db),
+    _admin: StaffUser = Depends(require_roles("admin")),
+) -> list[dict[str, Any]]:
+    logs = db.scalars(
+        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(500)
+    ).all()
+    return [serialize_audit_log(log) for log in logs]
+
+
+@app.get("/api/staff")
+def list_staff_users(
+    db: Session = Depends(get_db),
+    _admin: StaffUser = Depends(require_roles("admin")),
+) -> list[dict[str, Any]]:
+    users = db.scalars(select(StaffUser).order_by(StaffUser.id)).all()
+    return [serialize_staff_user(user) for user in users]
+
+
+@app.post("/api/staff", status_code=status.HTTP_201_CREATED)
+def create_staff_user(
+    payload: StaffCreatePayload,
+    db: Session = Depends(get_db),
+    admin: StaffUser = Depends(require_roles("admin")),
+) -> dict[str, Any]:
+    username = payload.username.strip()
+    display_name = payload.displayName.strip()
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", username):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Username may contain letters, numbers, dots, hyphens and underscores only.",
+        )
+    if not display_name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Display name cannot be empty.",
+        )
+
+    existing_user = db.scalar(
+        select(StaffUser).where(StaffUser.username == username)
+    )
+    if existing_user is not None:
+        raise HTTPException(status_code=409, detail="That username already exists.")
+
+    user = StaffUser(
+        username=username,
+        password_hash=PASSWORD_HASH.hash(payload.password),
+        display_name=display_name,
+        role=validate_staff_role(payload.role),
+        is_active=True,
+    )
+    db.add(user)
+    commit_or_conflict(db, "That username already exists.")
+    db.refresh(user)
+    record_audit(
+        db, admin, "Created", "Staff Account", user.id,
+        f"Created {user.role} account @{user.username}.",
+    )
+    return serialize_staff_user(user)
+
+
+@app.put("/api/staff/{user_id}")
+def update_staff_user(
+    user_id: int,
+    payload: StaffUpdatePayload,
+    db: Session = Depends(get_db),
+    admin: StaffUser = Depends(require_roles("admin")),
+) -> dict[str, Any]:
+    user = db.get(StaffUser, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Staff account not found.")
+
+    role = validate_staff_role(payload.role)
+    display_name = payload.displayName.strip()
+    if not display_name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Display name cannot be empty.",
+        )
+    if user.id == admin.id and (not payload.isActive or role != "admin"):
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot deactivate your own account or remove your own admin role.",
+        )
+
+    user.display_name = display_name
+    user.role = role
+    user.is_active = payload.isActive
+    db.commit()
+    db.refresh(user)
+    record_audit(
+        db, admin, "Updated", "Staff Account", user.id,
+        f"Updated @{user.username}: role {user.role}, "
+        f"status {'active' if user.is_active else 'inactive'}.",
+    )
+    return serialize_staff_user(user)
+
+
+@app.patch("/api/staff/{user_id}/password")
+def reset_staff_password(
+    user_id: int,
+    payload: StaffPasswordPayload,
+    db: Session = Depends(get_db),
+    admin: StaffUser = Depends(require_roles("admin")),
+) -> dict[str, str]:
+    user = db.get(StaffUser, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Staff account not found.")
+
+    user.password_hash = PASSWORD_HASH.hash(payload.password)
+    db.commit()
+    record_audit(
+        db, admin, "Password Reset", "Staff Account", user.id,
+        f"Reset the password for @{user.username}.",
+    )
+    return {"message": f"Password reset for {user.username}."}
 
 
 def serialize_menu_item(item: MenuItem) -> dict[str, Any]:
@@ -509,7 +869,7 @@ def serialize_order(order: Order) -> dict[str, Any]:
         "phone": order.phone,
         "table": order.table,
         "type": (
-            f"Dine-in Â· Table {order.table}"
+            f"Dine-in · Table {order.table}"
             if order.order_type.lower().startswith("dine")
             else order.order_type
         ),
@@ -591,11 +951,13 @@ def list_menu(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
 def create_menu_item(
     payload: MenuItemPayload,
     db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
 ) -> dict[str, Any]:
     item = MenuItem(**payload.model_dump())
     db.add(item)
     commit_or_conflict(db, "A menu item with this name already exists.")
     db.refresh(item)
+    record_audit(db, user, "Created", "Menu Item", item.id, f"Added {item.name}.")
     return serialize_menu_item(item)
 
 
@@ -604,6 +966,7 @@ def update_menu_item(
     item_id: int,
     payload: MenuItemPayload,
     db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
 ) -> dict[str, Any]:
     item = db.get(MenuItem, item_id)
     if item is None:
@@ -612,21 +975,31 @@ def update_menu_item(
         setattr(item, field, value)
     commit_or_conflict(db, "A menu item with this name already exists.")
     db.refresh(item)
+    record_audit(db, user, "Updated", "Menu Item", item.id, f"Updated {item.name}.")
     return serialize_menu_item(item)
 
 
 @app.delete("/api/menu/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_menu_item(item_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_menu_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
+) -> Response:
     item = db.get(MenuItem, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Menu item not found.")
+    item_name = item.name
     db.delete(item)
     db.commit()
+    record_audit(db, user, "Deleted", "Menu Item", item_id, f"Deleted {item_name}.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.get("/api/inventory")
-def list_inventory(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+def list_inventory(
+    db: Session = Depends(get_db),
+    _user: StaffUser = Depends(require_roles("admin", "employee")),
+) -> list[dict[str, Any]]:
     items = db.scalars(select(InventoryItem).order_by(InventoryItem.id)).all()
     return [serialize_inventory_item(item) for item in items]
 
@@ -635,6 +1008,7 @@ def list_inventory(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
 def create_inventory_item(
     payload: InventoryItemPayload,
     db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
 ) -> dict[str, Any]:
     item = InventoryItem(
         name=payload.name,
@@ -649,6 +1023,7 @@ def create_inventory_item(
     db.add(item)
     commit_or_conflict(db, "An inventory item with this name already exists.")
     db.refresh(item)
+    record_audit(db, user, "Created", "Inventory", item.id, f"Added {item.name}.")
     return serialize_inventory_item(item)
 
 
@@ -657,6 +1032,7 @@ def update_inventory_item(
     item_id: int,
     payload: InventoryItemPayload,
     db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
 ) -> dict[str, Any]:
     item = db.get(InventoryItem, item_id)
     if item is None:
@@ -671,16 +1047,26 @@ def update_inventory_item(
     item.notes = payload.notes
     commit_or_conflict(db, "An inventory item with this name already exists.")
     db.refresh(item)
+    record_audit(
+        db, user, "Updated", "Inventory", item.id,
+        f"Updated {item.name}; stock is {item.current_stock} {item.unit}.",
+    )
     return serialize_inventory_item(item)
 
 
 @app.delete("/api/inventory/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_inventory_item(item_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_inventory_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
+) -> Response:
     item = db.get(InventoryItem, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Inventory item not found.")
+    item_name = item.name
     db.delete(item)
     db.commit()
+    record_audit(db, user, "Deleted", "Inventory", item_id, f"Deleted {item_name}.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -702,7 +1088,10 @@ def generate_order_id(db: Session, requested_id: Any = None) -> str:
 
 
 @app.get("/api/orders")
-def list_orders(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+def list_orders(
+    db: Session = Depends(get_db),
+    _user: StaffUser = Depends(require_roles("admin", "employee")),
+) -> list[dict[str, Any]]:
     orders = db.scalars(select(Order).order_by(Order.created_at.desc())).all()
     return [serialize_order(order) for order in orders]
 
@@ -760,23 +1149,34 @@ def update_order_status(
     order_id: str,
     payload: OrderStatusPayload,
     db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin", "employee")),
 ) -> dict[str, Any]:
     order = db.get(Order, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found.")
+    old_status = order.status
     order.status = payload.status
     db.commit()
     db.refresh(order)
+    record_audit(
+        db, user, "Status Changed", "Order", order.id,
+        f"Changed status from {old_status} to {order.status}.",
+    )
     return serialize_order(order)
 
 
 @app.delete("/api/orders/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_order(order_id: str, db: Session = Depends(get_db)) -> Response:
+def delete_order(
+    order_id: str,
+    db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
+) -> Response:
     order = db.get(Order, order_id)
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found.")
     db.delete(order)
     db.commit()
+    record_audit(db, user, "Deleted", "Order", order_id, "Deleted the order.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -822,13 +1222,20 @@ def apply_bill_payload(bill: Bill, payload: BillPayload) -> None:
 
 
 @app.get("/api/bills")
-def list_bills(db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+def list_bills(
+    db: Session = Depends(get_db),
+    _user: StaffUser = Depends(require_roles("admin", "employee")),
+) -> list[dict[str, Any]]:
     bills = db.scalars(select(Bill).order_by(Bill.created_at.desc())).all()
     return [serialize_bill(bill) for bill in bills]
 
 
 @app.get("/api/bills/{bill_id}")
-def get_bill(bill_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+def get_bill(
+    bill_id: str,
+    db: Session = Depends(get_db),
+    _user: StaffUser = Depends(require_roles("admin", "employee")),
+) -> dict[str, Any]:
     bill = db.get(Bill, bill_id)
     if bill is None:
         raise HTTPException(status_code=404, detail="Bill not found.")
@@ -839,6 +1246,7 @@ def get_bill(bill_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
 def save_bill(
     payload: BillPayload,
     db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin", "employee")),
 ) -> dict[str, Any]:
     order_id = payload.orderId.strip()
     bill = db.scalar(select(Bill).where(Bill.order_id == order_id))
@@ -859,21 +1267,33 @@ def save_bill(
 
     commit_or_conflict(db, "A bill already exists for this order.")
     db.refresh(bill)
+    record_audit(
+        db, user, "Saved", "Bill", bill.id,
+        f"Saved bill for order {bill.order_id}; total ₹{bill.total:.2f}.",
+    )
     return serialize_bill(bill)
 
 
 @app.delete("/api/bills/{bill_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_bill(bill_id: str, db: Session = Depends(get_db)) -> Response:
+def delete_bill(
+    bill_id: str,
+    db: Session = Depends(get_db),
+    user: StaffUser = Depends(require_roles("admin")),
+) -> Response:
     bill = db.get(Bill, bill_id)
     if bill is None:
         raise HTTPException(status_code=404, detail="Bill not found.")
     db.delete(bill)
     db.commit()
+    record_audit(db, user, "Deleted", "Bill", bill_id, "Deleted the bill.")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.post("/api/ai/analyse")
-def analytics_endpoint(payload: dict[str, Any]) -> dict[str, Any]:
+def analytics_endpoint(
+    payload: dict[str, Any],
+    _user: StaffUser = Depends(require_roles("admin")),
+) -> dict[str, Any]:
     return analyse_business(payload)
 
 
@@ -886,6 +1306,9 @@ def customer_endpoint(payload: dict[str, Any]) -> dict[str, str]:
 
 
 @app.post("/ask-ai")
-def legacy_analytics_endpoint(payload: dict[str, Any]) -> dict[str, str]:
+def legacy_analytics_endpoint(
+    payload: dict[str, Any],
+    _user: StaffUser = Depends(require_roles("admin")),
+) -> dict[str, str]:
     result = analyse_business(payload)
     return {"answer": result["answer"]}
