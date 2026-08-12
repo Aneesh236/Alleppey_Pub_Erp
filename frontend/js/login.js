@@ -186,7 +186,10 @@ async function login(event) {
     } catch (error) {
         markInputError(usernameInput);
         markInputError(passwordInput);
-        showToast(error.message || "Login failed.", "error");
+        const message = error instanceof TypeError
+            ? "Cannot reach the backend. Start RUN_AI.bat and try again."
+            : (error.message || "Login failed.");
+        showToast(message, "error");
         setLoading(false);
     }
 }
