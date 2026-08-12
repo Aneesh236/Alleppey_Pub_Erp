@@ -12,6 +12,35 @@ const AI_API_URL = `${AI_BASE_URL}/ai/analyse`;
 
 const AI_HEALTH_URL = `${AI_BASE_URL.replace(/\/api$/, "")}/health`;
 
+function getAuthToken() {
+    return localStorage.getItem("authToken") ||
+        sessionStorage.getItem("authToken") || "";
+}
+
+function clearStaffSession() {
+    const keys = [
+        "authToken", "loggedInUser", "displayName", "userRole",
+        "isLoggedIn", "adminLoggedIn", "employeeLoggedIn", "authExpiresAt"
+    ];
+    [localStorage, sessionStorage].forEach(storage => {
+        keys.forEach(key => storage.removeItem(key));
+    });
+}
+
+function checkAdminAccess() {
+    const role = localStorage.getItem("userRole") ||
+        sessionStorage.getItem("userRole");
+    const loggedIn = localStorage.getItem("adminLoggedIn") === "true" ||
+        sessionStorage.getItem("adminLoggedIn") === "true";
+
+    if (role !== "admin" || !loggedIn || !getAuthToken()) {
+        clearStaffSession();
+        window.location.replace("role-selection.html");
+        return false;
+    }
+    return true;
+}
+
 const ORDER_STORAGE_KEY =
     "pubOrders";
 
@@ -796,7 +825,9 @@ async function analyseBusiness() {
 
                     headers: {
                         "Content-Type":
-                            "application/json"
+                            "application/json",
+                        "Authorization":
+                            `Bearer ${getAuthToken()}`
                     },
 
                     body:
@@ -821,6 +852,12 @@ async function analyseBusiness() {
 
         }
 
+
+        if (response.status === 401 || response.status === 403) {
+            clearStaffSession();
+            window.location.replace("role-selection.html");
+            throw new Error("Your admin session expired. Please log in again.");
+        }
 
         if (!response.ok) {
 
@@ -1583,6 +1620,10 @@ function showToast(
 ========================================= */
 
 function initializeAIAssistant() {
+
+    if (!checkAdminAccess()) {
+        return;
+    }
 
     loadBusinessData();
 

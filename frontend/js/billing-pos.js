@@ -388,7 +388,8 @@ const defaultOrders = [
 
 function checkBillingAccess() {
 
-    const role = localStorage.getItem("userRole");
+    const role = localStorage.getItem("userRole") ||
+        sessionStorage.getItem("userRole");
 
     const employeeLoggedIn =
         localStorage.getItem("employeeLoggedIn") === "true" ||
@@ -426,15 +427,44 @@ function getApiBaseUrl() {
 }
 
 
+function getAuthToken() {
+
+    return localStorage.getItem("authToken") ||
+        sessionStorage.getItem("authToken") || "";
+
+}
+
+
+function endStaffSession() {
+
+    [localStorage, sessionStorage].forEach(storage => {
+        [
+            "authToken", "loggedInUser", "displayName", "userRole",
+            "isLoggedIn", "adminLoggedIn", "employeeLoggedIn", "authExpiresAt"
+        ].forEach(key => storage.removeItem(key));
+    });
+    window.location.replace("role-selection.html");
+
+}
+
+
 async function apiRequest(path, options = {}) {
+
+    const token = getAuthToken();
+    if (!token) {
+        endStaffSession();
+        throw new Error("Please log in again.");
+    }
 
     const response = await fetch(
         `${getApiBaseUrl()}${path}`,
         {
+            ...options,
             headers: {
-                "Content-Type": "application/json"
-            },
-            ...options
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+                ...(options.headers || {})
+            }
         }
     );
 
@@ -446,6 +476,11 @@ async function apiRequest(path, options = {}) {
         if (response.status !== 204) {
             console.error("The server response could not be read.", error);
         }
+    }
+
+    if (response.status === 401 || response.status === 403) {
+        endStaffSession();
+        throw new Error("Your staff session expired. Please log in again.");
     }
 
     if (!response.ok) {
@@ -3153,7 +3188,8 @@ backDashboardBtn.addEventListener(
     "click",
     function () {
 
-        const role = localStorage.getItem("userRole");
+        const role = localStorage.getItem("userRole") ||
+            sessionStorage.getItem("userRole");
 
         window.location.href =
             role === "admin"

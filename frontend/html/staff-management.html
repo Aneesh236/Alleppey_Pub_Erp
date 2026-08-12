@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management | Alleppey Pub ERP</title>
+    <link rel="stylesheet" href="../css/staff-management.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <a href="admin-dashboard.html" class="brand">
+            <img src="../img/logo.jpeg" alt="Alleppey Pub and Bar logo">
+            <div>
+                <strong>ALLEPPEY PUB</strong>
+                <span>Admin workspace</span>
+            </div>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Administrator navigation">
+            <p class="nav-label">OVERVIEW</p>
+            <a href="admin-dashboard.html" class="nav-link">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <p class="nav-label">MANAGEMENT</p>
+            <a href="order-management.html" class="nav-link">
+                <i class="fa-solid fa-receipt"></i>
+                <span>Orders</span>
+            </a>
+            <a href="menu-management.html" class="nav-link">
+                <i class="fa-solid fa-utensils"></i>
+                <span>Menu Management</span>
+            </a>
+            <a href="billing-pos.html" class="nav-link">
+                <i class="fa-solid fa-cash-register"></i>
+                <span>Billing &amp; POS</span>
+            </a>
+            <a href="inventory.html" class="nav-link">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <span>Inventory</span>
+            </a>
+            <a href="staff-management.html" class="nav-link active">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Staff Accounts</span>
+            </a>
+            <a href="audit-logs.html" class="nav-link">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Trail</span>
+            </a>
+
+            <p class="nav-label">INTELLIGENCE</p>
+            <a href="reports-analytics.html" class="nav-link">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Reports &amp; Analytics</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-profile">
+                <span class="profile-avatar"><i class="fa-solid fa-user-shield"></i></span>
+                <div>
+                    <strong id="sidebarUsername">Administrator</strong>
+                    <span>System administrator</span>
+                </div>
+            </div>
+            <button type="button" class="logout-btn" id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Logout</span>
+            </button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Open navigation">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div>
+                    <p class="eyebrow">ADMINISTRATION</p>
+                    <h1>Staff Accounts</h1>
+                </div>
+            </div>
+
+            <div class="topbar-actions">
+                <button type="button" class="refresh-btn" id="refreshStaffBtn">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Refresh</span>
+                </button>
+                <button type="button" class="primary-btn" id="openAddStaffBtn">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Add Staff</span>
+                </button>
+            </div>
+        </header>
+
+        <section class="intro-panel">
+            <div>
+                <span class="intro-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                <div>
+                    <p class="eyebrow">SECURE ACCESS CONTROL</p>
+                    <h2>Manage your ERP team</h2>
+                    <p>Create accounts, assign roles, control access and reset staff passwords.</p>
+                </div>
+            </div>
+            <span class="security-badge"><i class="fa-solid fa-lock"></i> Admin only</span>
+        </section>
+
+        <section class="stats-grid" aria-label="Staff summary">
+            <article class="stat-card">
+                <span class="stat-icon total"><i class="fa-solid fa-users"></i></span>
+                <div><span>Total Accounts</span><strong id="totalStaff">0</strong></div>
+            </article>
+            <article class="stat-card">
+                <span class="stat-icon active"><i class="fa-solid fa-user-check"></i></span>
+                <div><span>Active</span><strong id="activeStaff">0</strong></div>
+            </article>
+            <article class="stat-card">
+                <span class="stat-icon admin"><i class="fa-solid fa-user-shield"></i></span>
+                <div><span>Administrators</span><strong id="adminCount">0</strong></div>
+            </article>
+            <article class="stat-card">
+                <span class="stat-icon employee"><i class="fa-solid fa-user-tie"></i></span>
+                <div><span>Employees</span><strong id="employeeCount">0</strong></div>
+            </article>
+        </section>
+
+        <section class="staff-panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Team Directory</h2>
+                    <p id="resultCount">Loading staff accounts...</p>
+                </div>
+
+                <div class="filters">
+                    <label class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" id="staffSearch" placeholder="Search staff...">
+                    </label>
+
+                    <select id="roleFilter" aria-label="Filter by role">
+                        <option value="all">All roles</option>
+                        <option value="admin">Administrators</option>
+                        <option value="employee">Employees</option>
+                    </select>
+
+                    <select id="statusFilter" aria-label="Filter by account status">
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Staff Member</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="actions-heading">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffTableBody"></tbody>
+                </table>
+
+                <div class="empty-state" id="emptyState" hidden>
+                    <i class="fa-solid fa-users-slash"></i>
+                    <h3>No staff accounts found</h3>
+                    <p>Try changing the filters or add a new staff account.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal" id="staffModal" hidden>
+        <button class="modal-backdrop" type="button" data-close="staff" aria-label="Close dialog"></button>
+        <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="staffModalTitle">
+            <header class="modal-header">
+                <div>
+                    <p class="eyebrow">STAFF ACCOUNT</p>
+                    <h2 id="staffModalTitle">Add Staff Member</h2>
+                </div>
+                <button type="button" class="close-btn" data-close="staff" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </header>
+
+            <form id="staffForm">
+                <input type="hidden" id="staffId">
+
+                <label class="form-group">
+                    <span>Full name</span>
+                    <input type="text" id="displayName" maxlength="120" placeholder="Example: Rahul Kumar" required>
+                </label>
+
+                <label class="form-group" id="usernameGroup">
+                    <span>Username</span>
+                    <input type="text" id="staffUsername" minlength="3" maxlength="80" placeholder="Example: rahul" required>
+                    <small>Letters, numbers, dots, hyphens and underscores only.</small>
+                </label>
+
+                <label class="form-group">
+                    <span>Role</span>
+                    <select id="staffRole" required>
+                        <option value="employee">Employee</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </label>
+
+                <label class="form-group" id="passwordGroup">
+                    <span>Temporary password</span>
+                    <span class="password-input">
+                        <input type="password" id="staffPassword" minlength="8" maxlength="200" placeholder="At least 8 characters">
+                        <button type="button" class="password-toggle" data-password-target="staffPassword" aria-label="Show password">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </span>
+                    <small>The employee should receive this password privately.</small>
+                </label>
+
+                <label class="switch-row" id="activeGroup" hidden>
+                    <span>
+                        <strong>Active account</strong>
+                        <small>Inactive accounts cannot log in.</small>
+                    </span>
+                    <input type="checkbox" id="staffActive" checked>
+                </label>
+
+                <footer class="modal-actions">
+                    <button type="button" class="secondary-btn" data-close="staff">Cancel</button>
+                    <button type="submit" class="primary-btn" id="saveStaffBtn">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save Account</span>
+                    </button>
+                </footer>
+            </form>
+        </section>
+    </div>
+
+    <div class="modal" id="passwordModal" hidden>
+        <button class="modal-backdrop" type="button" data-close="password" aria-label="Close dialog"></button>
+        <section class="modal-card small-modal" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+            <header class="modal-header">
+                <div>
+                    <p class="eyebrow">SECURITY</p>
+                    <h2 id="passwordModalTitle">Reset Password</h2>
+                </div>
+                <button type="button" class="close-btn" data-close="password" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </header>
+
+            <form id="passwordForm">
+                <input type="hidden" id="passwordStaffId">
+                <p class="modal-description">Set a new password for <strong id="passwordStaffName">this account</strong>.</p>
+
+                <label class="form-group">
+                    <span>New password</span>
+                    <span class="password-input">
+                        <input type="password" id="newPassword" minlength="8" maxlength="200" required placeholder="At least 8 characters">
+                        <button type="button" class="password-toggle" data-password-target="newPassword" aria-label="Show password">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </span>
+                </label>
+
+                <label class="form-group">
+                    <span>Confirm password</span>
+                    <input type="password" id="confirmPassword" minlength="8" maxlength="200" required placeholder="Enter it again">
+                </label>
+
+                <footer class="modal-actions">
+                    <button type="button" class="secondary-btn" data-close="password">Cancel</button>
+                    <button type="submit" class="primary-btn" id="resetPasswordBtn">
+                        <i class="fa-solid fa-key"></i>
+                        <span>Reset Password</span>
+                    </button>
+                </footer>
+            </form>
+        </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+        <i class="fa-solid fa-circle-check"></i>
+        <span id="toastMessage">Saved</span>
+    </div>
+
+    <script src="../js/config.js?v=7"></script>
+    <script src="../js/staff-management.js?v=7"></script>
+</body>
+
+</html>

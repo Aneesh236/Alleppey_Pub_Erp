@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Trail | Alleppey Pub ERP</title>
+    <link rel="stylesheet" href="../css/audit-logs.css?v=7">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+</head>
+<body>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <a href="admin-dashboard.html" class="brand">
+            <img src="../img/logo.jpeg" alt="Alleppey Pub and Bar logo">
+            <div><strong>ALLEPPEY PUB</strong><span>Admin workspace</span></div>
+        </a>
+
+        <nav class="sidebar-nav" aria-label="Administrator navigation">
+            <p class="nav-label">OVERVIEW</p>
+            <a href="admin-dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line"></i><span>Dashboard</span></a>
+            <p class="nav-label">MANAGEMENT</p>
+            <a href="order-management.html" class="nav-link"><i class="fa-solid fa-receipt"></i><span>Orders</span></a>
+            <a href="menu-management.html" class="nav-link"><i class="fa-solid fa-utensils"></i><span>Menu Management</span></a>
+            <a href="billing-pos.html" class="nav-link"><i class="fa-solid fa-cash-register"></i><span>Billing &amp; POS</span></a>
+            <a href="inventory.html" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i><span>Inventory</span></a>
+            <a href="staff-management.html" class="nav-link"><i class="fa-solid fa-users-gear"></i><span>Staff Accounts</span></a>
+            <a href="audit-logs.html" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i><span>Audit Trail</span></a>
+            <p class="nav-label">INTELLIGENCE</p>
+            <a href="reports-analytics.html" class="nav-link"><i class="fa-solid fa-chart-pie"></i><span>Reports &amp; Analytics</span></a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-profile">
+                <span class="profile-avatar"><i class="fa-solid fa-user-shield"></i></span>
+                <div><strong id="sidebarUsername">Administrator</strong><span>System administrator</span></div>
+            </div>
+            <button type="button" class="logout-btn" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i><span>Logout</span></button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button type="button" class="icon-btn menu-toggle" id="menuToggle" aria-label="Open navigation"><i class="fa-solid fa-bars"></i></button>
+                <div><p class="eyebrow">SECURITY &amp; COMPLIANCE</p><h1>Audit Trail</h1></div>
+            </div>
+            <button type="button" class="refresh-btn" id="refreshLogsBtn"><i class="fa-solid fa-rotate"></i><span>Refresh logs</span></button>
+        </header>
+
+        <section class="intro-panel">
+            <span class="intro-icon"><i class="fa-solid fa-shield-halved"></i></span>
+            <div>
+                <p class="eyebrow">ADMIN-ONLY RECORD</p>
+                <h2>See every important ERP change</h2>
+                <p>Review who changed orders, stock, menu items, bills and staff accounts.</p>
+            </div>
+            <span class="live-badge"><span></span> Database record</span>
+        </section>
+
+        <section class="stats-grid">
+            <article class="stat-card"><i class="fa-solid fa-list-check blue"></i><div><span>Total Events</span><strong id="totalEvents">0</strong></div></article>
+            <article class="stat-card"><i class="fa-solid fa-calendar-day green"></i><div><span>Today</span><strong id="todayEvents">0</strong></div></article>
+            <article class="stat-card"><i class="fa-solid fa-users purple"></i><div><span>Active Actors</span><strong id="activeActors">0</strong></div></article>
+            <article class="stat-card"><i class="fa-solid fa-triangle-exclamation gold"></i><div><span>Deletes</span><strong id="deleteEvents">0</strong></div></article>
+        </section>
+
+        <section class="logs-panel">
+            <div class="panel-heading">
+                <div><h2>Activity History</h2><p id="resultCount">Loading audit events...</p></div>
+                <div class="filters">
+                    <label class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="logSearch" placeholder="Search actor, action or details..."></label>
+                    <select id="entityFilter" aria-label="Filter by area"><option value="all">All areas</option></select>
+                    <select id="actionFilter" aria-label="Filter by action"><option value="all">All actions</option></select>
+                </div>
+            </div>
+
+            <div class="timeline" id="auditTimeline"></div>
+            <div class="empty-state" id="emptyState" hidden>
+                <i class="fa-solid fa-clock-rotate-left"></i><h3>No activity found</h3><p>Try changing the search or filters.</p>
+            </div>
+        </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"><i class="fa-solid fa-circle-check"></i><span id="toastMessage">Updated</span></div>
+    <script src="../js/config.js?v=7"></script>
+    <script src="../js/audit-logs.js?v=7"></script>
+</body>
+</html>

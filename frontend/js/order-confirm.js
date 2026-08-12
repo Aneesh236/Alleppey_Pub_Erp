@@ -325,7 +325,7 @@ async function refreshOrderStatus(showMessage = true) {
         console.error("Could not refresh the order status.", error);
 
         lastStatusUpdate.textContent =
-            "Unable to contact the server Â· showing saved details";
+            "Unable to contact the server · showing saved details";
 
         if (showMessage) {
             showToast(
@@ -594,7 +594,7 @@ function formatCurrency(value) {
 
 
 function formatDate(date) {
-    if (Number.isNaN(date.getTime())) return "â€”";
+    if (Number.isNaN(date.getTime())) return "—";
 
     return date.toLocaleDateString(
         "en-IN",
@@ -608,7 +608,7 @@ function formatDate(date) {
 
 
 function formatTime(date) {
-    if (Number.isNaN(date.getTime())) return "â€”";
+    if (Number.isNaN(date.getTime())) return "—";
 
     return date.toLocaleTimeString(
         "en-IN",

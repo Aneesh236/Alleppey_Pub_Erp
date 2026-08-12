@@ -1,103 +1,79 @@
-/* =========================================
-   ALLEPPEY PUB ERP - ROLE SELECTION
-========================================= */
+"use strict";
 
-function customerLogin() {
+/* Alleppey Pub ERP - portal role selection. */
 
-    window.location.href =
-        "../html/customer-home.html";
+let navigationInProgress = false;
 
+
+function clearPreviousSession() {
+    const sessionKeys = [
+        "authToken",
+        "loggedInUser",
+        "displayName",
+        "adminLoggedIn",
+        "employeeLoggedIn",
+        "isLoggedIn",
+        "userRole",
+        "authExpiresAt"
+    ];
+
+    sessionKeys.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    });
 }
 
 
-function employeeLogin() {
-
-    localStorage.setItem(
-        "selectedRole",
-        "employee"
-    );
-
-    window.location.href =
-        "../html/login.html";
-
+function openCustomerPortal() {
+    clearPreviousSession();
+    localStorage.setItem("selectedRole", "customer");
+    localStorage.setItem("userRole", "customer");
+    window.location.href = "customer-home.html";
 }
 
 
-function adminLogin() {
-
-    localStorage.setItem(
-        "selectedRole",
-        "admin"
-    );
-
-    window.location.href =
-        "../html/login.html";
-
+function openStaffLogin(role) {
+    clearPreviousSession();
+    localStorage.setItem("selectedRole", role);
+    window.location.href = `login.html?role=${encodeURIComponent(role)}`;
 }
 
 
-/* Allow keyboard selection using Enter or Space */
+function selectRole(role) {
+    if (navigationInProgress) return;
 
-function handleCardKey(event, callback) {
+    navigationInProgress = true;
 
-    if (
-        event.key === "Enter" ||
-        event.key === " "
-    ) {
-
-        event.preventDefault();
-
-        callback();
-
+    if (role === "customer") {
+        openCustomerPortal();
+        return;
     }
 
+    if (role === "employee" || role === "admin") {
+        openStaffLogin(role);
+        return;
+    }
+
+    navigationInProgress = false;
 }
 
 
-/* Stop button clicks from triggering twice */
-
-document
-    .querySelectorAll(".role-button")
-    .forEach((button) => {
-
-        button.addEventListener(
-            "click",
-            function (event) {
-
-                event.stopPropagation();
-
-                const card =
-                    event.currentTarget.closest(
-                        ".role-card"
-                    );
-
-                if (
-                    card.classList.contains(
-                        "customer-card"
-                    )
-                ) {
-
-                    customerLogin();
-
-                } else if (
-                    card.classList.contains(
-                        "employee-card"
-                    )
-                ) {
-
-                    employeeLogin();
-
-                } else if (
-                    card.classList.contains(
-                        "admin-card"
-                    )
-                ) {
-
-                    adminLogin();
-
-                }
-
-            }
-        );
-
+document.querySelectorAll(".role-card[data-role]").forEach((card) => {
+    card.addEventListener("click", () => {
+        selectRole(card.dataset.role);
     });
+
+    card.addEventListener("keydown", (event) => {
+        if (event.target.closest("button")) return;
+
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            selectRole(card.dataset.role);
+        }
+    });
+});
+
+
+window.addEventListener("pageshow", () => {
+    navigationInProgress = false;
+});

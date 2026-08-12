@@ -11,7 +11,7 @@
     <title>Reports & Analytics | Alleppey Pub ERP</title>
 
     <link rel="stylesheet"
-          href="../css/reports-analytics.css">
+          href="../css/reports-analytics.css?v=7">
 
     <!-- Google Font -->
     <link rel="preconnect"
@@ -45,7 +45,7 @@
 
             <button type="button"
                     class="back-btn"
-                    onclick="window.location.href='../html/admin-dashboard.html'">
+                    id="backDashboardBtn">
 
                 <i class="fa-solid fa-arrow-left"></i>
 
@@ -97,6 +97,10 @@
         </div>
 
     </header>
+
+    <p class="report-data-status" id="reportDataStatus">
+        Loading database data...
+    </p>
 
 
 
@@ -1244,7 +1248,8 @@
          JAVASCRIPT
     ========================================== -->
 
-    <script src="../js/reports-analytics.js"></script>
+    <script src="../js/config.js?v=7"></script>
+    <script src="../js/reports-analytics.js?v=7"></script>
 
 </body>
 

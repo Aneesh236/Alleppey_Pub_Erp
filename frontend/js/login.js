@@ -1,80 +1,52 @@
-/* Alleppey Pub ERP - role-based demo login */
-
 "use strict";
 
-const USERS = {
+/* Alleppey Pub ERP - secure staff login */
+
+const ROLE_DETAILS = {
     employee: {
         label: "Employee",
-        username: "employee",
-        password: "1234",
         dashboard: "emp_dash.html",
         icon: "fa-user-tie"
     },
-
     admin: {
         label: "Administrator",
-        username: "admin",
-        password: "admin123",
         dashboard: "admin-dashboard.html",
         icon: "fa-user-shield"
     }
 };
 
-
 const loginForm = document.getElementById("loginForm");
 const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const rememberInput = document.getElementById("remember");
-
-const togglePasswordButton =
-    document.getElementById("togglePassword");
-
+const togglePasswordButton = document.getElementById("togglePassword");
 const loginButton = document.getElementById("loginBtn");
 const loginButtonText = loginButton.querySelector("span");
-
-const forgotPasswordLink =
-    document.getElementById("forgotPassword");
-
+const forgotPasswordLink = document.getElementById("forgotPassword");
 const toast = document.getElementById("toast");
-
 const roleTitle = document.getElementById("roleTitle");
 const roleMessage = document.getElementById("roleMessage");
 const roleBadge = document.getElementById("roleBadge");
 const roleIcon = document.getElementById("roleIcon");
 const roleName = document.getElementById("roleName");
-const demoLogin = document.getElementById("demoLogin");
 
-
-let toastTimer;
+let toastTimer = null;
 let activeRole = "";
 
-
-/* ==========================================
-   GET SELECTED ROLE
-========================================== */
-
-function getSelectedRole() {
-    const urlParameters =
-        new URLSearchParams(window.location.search);
-
-    const urlRole = urlParameters.get("role");
-
-    const savedRole =
-        localStorage.getItem("selectedRole");
-
-    const role = urlRole || savedRole;
-
-    if (USERS[role]) {
-        return role;
+function getApiBaseUrl() {
+    const baseUrl = String(window.PUB_API_BASE_URL || "").replace(/\/+$/, "");
+    if (!baseUrl) {
+        throw new Error("The backend URL is missing from config.js.");
     }
-
-    return "";
+    return baseUrl;
 }
 
-
-/* ==========================================
-   SET UP LOGIN PAGE
-========================================== */
+function getSelectedRole() {
+    const urlRole = new URLSearchParams(window.location.search).get("role");
+    const savedRole = localStorage.getItem("selectedRole");
+    const role = urlRole || savedRole;
+    return ROLE_DETAILS[role] ? role : "";
+}
 
 function setupLoginPage() {
     activeRole = getSelectedRole();
@@ -84,313 +56,185 @@ function setupLoginPage() {
         return;
     }
 
-    const user = USERS[activeRole];
-
+    const details = ROLE_DETAILS[activeRole];
     localStorage.setItem("selectedRole", activeRole);
-
-    document.title =
-        `${user.label} Login | Alleppey Pub ERP`;
-
-    roleTitle.textContent =
-        `${user.label} Login`;
-
-    roleMessage.textContent =
-        `Enter your ${user.label.toLowerCase()} credentials`;
-
-    roleName.textContent = user.label;
-
-    roleIcon.className =
-        `fa-solid ${user.icon}`;
-
+    document.title = `${details.label} Login | Alleppey Pub ERP`;
+    roleTitle.textContent = `${details.label} Login`;
+    roleMessage.textContent = `Enter your ${details.label.toLowerCase()} credentials`;
+    roleName.textContent = details.label;
+    roleIcon.className = `fa-solid ${details.icon}`;
     roleBadge.classList.add(activeRole);
-
-    demoLogin.textContent =
-        `${user.username} / ${user.password}`;
-
-    restoreRememberedUser();
+    restoreRememberedUsername();
 }
 
-
-/* ==========================================
-   TOAST MESSAGE
-========================================== */
-
-function showToast(message, type = "") {
-    clearTimeout(toastTimer);
-
-    toast.textContent = message;
-    toast.className = type;
-
-    requestAnimationFrame(() => {
-        toast.classList.add("show");
+async function requestLogin(username, password) {
+    const response = await fetch(`${getApiBaseUrl()}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            username,
+            password,
+            role: activeRole
+        })
     });
 
-    toastTimer = setTimeout(() => {
-        toast.classList.remove("show");
-    }, 2800);
+    let result = null;
+    try {
+        result = await response.json();
+    } catch (error) {
+        console.error("The login response could not be read.", error);
+    }
+
+    if (!response.ok) {
+        throw new Error(result?.detail || `Login failed (${response.status}).`);
+    }
+
+    if (!result?.accessToken || result?.user?.role !== activeRole) {
+        throw new Error("The server returned an invalid login session.");
+    }
+
+    return result;
 }
 
+function clearStaffSession() {
+    const keys = [
+        "authToken",
+        "loggedInUser",
+        "displayName",
+        "userRole",
+        "isLoggedIn",
+        "adminLoggedIn",
+        "employeeLoggedIn",
+        "authExpiresAt"
+    ];
 
-/* ==========================================
-   INPUT ERRORS
-========================================== */
+    keys.forEach(key => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    });
+}
+
+function saveSession(result) {
+    clearStaffSession();
+
+    const user = result.user;
+
+    // Keep all authentication values together. Splitting them between
+    // localStorage and sessionStorage caused valid users to be redirected.
+    localStorage.setItem("authToken", result.accessToken);
+    localStorage.setItem("loggedInUser", user.username);
+    localStorage.setItem("displayName", user.displayName || user.username);
+    localStorage.setItem("userRole", user.role);
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem(`${user.role}LoggedIn`, "true");
+    localStorage.setItem(
+        "authExpiresAt",
+        String(Date.now() + (Number(result.expiresIn) || 28800) * 1000)
+    );
+}
+
+function saveRememberedUsername(username) {
+    const key = `rememberUser_${activeRole}`;
+    if (rememberInput.checked) {
+        localStorage.setItem(key, username);
+    } else {
+        localStorage.removeItem(key);
+    }
+}
+
+function restoreRememberedUsername() {
+    const username = localStorage.getItem(`rememberUser_${activeRole}`);
+    if (username) {
+        usernameInput.value = username;
+        rememberInput.checked = true;
+    }
+}
+
+async function login(event) {
+    event.preventDefault();
+    clearInputErrors();
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!username) {
+        markInputError(usernameInput);
+        usernameInput.focus();
+        showToast("Please enter your username.", "error");
+        return;
+    }
+
+    if (!password) {
+        markInputError(passwordInput);
+        passwordInput.focus();
+        showToast("Please enter your password.", "error");
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        const result = await requestLogin(username, password);
+        saveSession(result);
+        saveRememberedUsername(username);
+        passwordInput.value = "";
+        showToast(`Welcome, ${result.user.displayName || username}!`, "success");
+
+        window.setTimeout(() => {
+            window.location.href = ROLE_DETAILS[activeRole].dashboard;
+        }, 700);
+    } catch (error) {
+        markInputError(usernameInput);
+        markInputError(passwordInput);
+        showToast(error.message || "Login failed.", "error");
+        setLoading(false);
+    }
+}
+
+function markInputError(input) {
+    input.classList.add("input-error");
+}
 
 function clearInputErrors() {
     usernameInput.classList.remove("input-error");
     passwordInput.classList.remove("input-error");
 }
 
-
-/* ==========================================
-   LOADING BUTTON
-========================================== */
-
 function setLoading(isLoading) {
     loginButton.disabled = isLoading;
-
-    loginButtonText.textContent =
-        isLoading ? "Logging in..." : "Login";
-
-    loginButton.querySelector("i").className =
-        isLoading
-            ? "fa-solid fa-spinner fa-spin"
-            : "fa-solid fa-right-to-bracket";
+    loginButtonText.textContent = isLoading ? "Signing in..." : "Login";
+    loginButton.querySelector("i").className = isLoading
+        ? "fa-solid fa-spinner fa-spin"
+        : "fa-solid fa-right-to-bracket";
 }
 
-
-/* ==========================================
-   SAVE LOGIN SESSION
-========================================== */
-
-function saveSession(username) {
-    sessionStorage.removeItem("adminLoggedIn");
-    sessionStorage.removeItem("employeeLoggedIn");
-
-    sessionStorage.setItem(
-        "loggedInUser",
-        username
-    );
-
-    sessionStorage.setItem(
-        "userRole",
-        activeRole
-    );
-
-    sessionStorage.setItem(
-        "isLoggedIn",
-        "true"
-    );
-
-    sessionStorage.setItem(
-        `${activeRole}LoggedIn`,
-        "true"
-    );
-
-    localStorage.setItem(
-        "userRole",
-        activeRole
-    );
-
-    localStorage.setItem(
-        "loggedInUser",
-        username
-    );
-
-    localStorage.setItem(
-        `${activeRole}LoggedIn`,
-        "true"
-    );
-
-    const otherRole =
-        activeRole === "admin"
-            ? "employeeLoggedIn"
-            : "adminLoggedIn";
-
-    localStorage.removeItem(otherRole);
+function showToast(message, type = "") {
+    window.clearTimeout(toastTimer);
+    toast.textContent = message;
+    toast.className = type;
+    requestAnimationFrame(() => toast.classList.add("show"));
+    toastTimer = window.setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
+togglePasswordButton.addEventListener("click", () => {
+    const hidden = passwordInput.type === "password";
+    passwordInput.type = hidden ? "text" : "password";
+    togglePasswordButton.querySelector("i").className = hidden
+        ? "fa-solid fa-eye-slash"
+        : "fa-solid fa-eye";
+    togglePasswordButton.setAttribute(
+        "aria-label",
+        hidden ? "Hide password" : "Show password"
+    );
+    passwordInput.focus();
+});
 
-/* ==========================================
-   REMEMBER USERNAME
-========================================== */
-
-function saveRememberedUser(username) {
-    const storageKey =
-        `rememberUser_${activeRole}`;
-
-    if (rememberInput.checked) {
-        localStorage.setItem(
-            storageKey,
-            username
-        );
-    } else {
-        localStorage.removeItem(storageKey);
-    }
-}
-
-
-function restoreRememberedUser() {
-    const rememberedUsername =
-        localStorage.getItem(
-            `rememberUser_${activeRole}`
-        );
-
-    if (rememberedUsername) {
-        usernameInput.value =
-            rememberedUsername;
-
-        rememberInput.checked = true;
-    }
-}
-
-
-/* ==========================================
-   LOGIN
-========================================== */
-
-function login(event) {
+forgotPasswordLink.addEventListener("click", event => {
     event.preventDefault();
+    showToast("Ask the administrator to reset your password.", "error");
+});
 
-    clearInputErrors();
-
-    const username =
-        usernameInput.value.trim();
-
-    const password =
-        passwordInput.value;
-
-    const user = USERS[activeRole];
-
-    if (!username) {
-        usernameInput.classList.add("input-error");
-        usernameInput.focus();
-
-        showToast(
-            "Please enter your username",
-            "error"
-        );
-
-        return;
-    }
-
-    if (!password) {
-        passwordInput.classList.add("input-error");
-        passwordInput.focus();
-
-        showToast(
-            "Please enter your password",
-            "error"
-        );
-
-        return;
-    }
-
-    const usernameMatches =
-        username.toLowerCase() ===
-        user.username.toLowerCase();
-
-    const passwordMatches =
-        password === user.password;
-
-    if (!usernameMatches || !passwordMatches) {
-        usernameInput.classList.add("input-error");
-        passwordInput.classList.add("input-error");
-
-        showToast(
-            `Invalid ${user.label.toLowerCase()} credentials`,
-            "error"
-        );
-
-        return;
-    }
-
-    setLoading(true);
-
-    saveSession(username);
-    saveRememberedUser(username);
-
-    showToast(
-        `Welcome, ${username}!`,
-        "success"
-    );
-
-    setTimeout(() => {
-        window.location.href =
-            user.dashboard;
-    }, 700);
-}
-
-
-/* ==========================================
-   PASSWORD VISIBILITY
-========================================== */
-
-togglePasswordButton.addEventListener(
-    "click",
-    () => {
-        const isHidden =
-            passwordInput.type === "password";
-
-        passwordInput.type =
-            isHidden ? "text" : "password";
-
-        const icon =
-            togglePasswordButton.querySelector("i");
-
-        icon.className =
-            isHidden
-                ? "fa-solid fa-eye-slash"
-                : "fa-solid fa-eye";
-
-        togglePasswordButton.setAttribute(
-            "aria-label",
-            isHidden
-                ? "Hide password"
-                : "Show password"
-        );
-
-        passwordInput.focus();
-    }
-);
-
-
-/* ==========================================
-   FORGOT PASSWORD
-========================================== */
-
-forgotPasswordLink.addEventListener(
-    "click",
-    event => {
-        event.preventDefault();
-
-        showToast(
-            "Password recovery is unavailable in this demo.",
-            "error"
-        );
-    }
-);
-
-
-/* ==========================================
-   EVENTS
-========================================== */
-
-usernameInput.addEventListener(
-    "input",
-    clearInputErrors
-);
-
-passwordInput.addEventListener(
-    "input",
-    clearInputErrors
-);
-
-loginForm.addEventListener(
-    "submit",
-    login
-);
-
-window.addEventListener(
-    "DOMContentLoaded",
-    setupLoginPage
-);
+usernameInput.addEventListener("input", clearInputErrors);
+passwordInput.addEventListener("input", clearInputErrors);
+loginForm.addEventListener("submit", login);
+window.addEventListener("DOMContentLoaded", setupLoginPage);

@@ -1,14 +1,11 @@
 {
-  "name": "electron-app",
+  "name": "alleppey-pub-erp-frontend",
   "version": "1.0.0",
-  "main": "main.js",
+  "private": true,
   "scripts": {
-    "start": "electron"
+    "start": "npx serve ."
   },
-  "author": "",
+  "author": "Aneesh Ajayakumar",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "electron": "^36.5.0"
-  }
+  "description": "Static frontend for the Alleppey Pub & Bar ERP"
 }

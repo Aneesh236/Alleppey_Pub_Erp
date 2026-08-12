@@ -10,7 +10,7 @@
 
     <title>Admin Dashboard | Alleppey Pub ERP</title>
 
-    <link rel="stylesheet" href="../css/admin-dashboard.css">
+    <link rel="stylesheet" href="../css/admin-dashboard.css?v=7">
 
     <link
         rel="stylesheet"
@@ -65,6 +65,16 @@
                 <i class="fa-solid fa-boxes-stacked"></i>
                 <span>Inventory</span>
                 <span class="nav-count warning" id="sidebarStockCount">0</span>
+            </a>
+
+            <a href="staff-management.html" class="nav-link">
+                <i class="fa-solid fa-users-gear"></i>
+                <span>Staff Accounts</span>
+            </a>
+
+            <a href="audit-logs.html" class="nav-link">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Audit Trail</span>
             </a>
 
             <p class="nav-label">Intelligence</p>
@@ -207,7 +217,7 @@
 
                 <div class="stat-copy">
                     <span>Recorded Revenue</span>
-                    <strong id="totalRevenue">₹0</strong>
+                    <strong id="totalRevenue">&#8377;0</strong>
                     <small id="revenueDescription">From completed payments</small>
                 </div>
             </article>
@@ -438,8 +448,8 @@
 
     <div id="toast" role="status" aria-live="polite"></div>
 
-    <script src="../js/config.js"></script>
-    <script src="../js/admin-dashboard.js"></script>
+    <script src="../js/config.js?v=7"></script>
+    <script src="../js/admin-dashboard.js?v=7"></script>
 
 </body>
 

@@ -367,7 +367,8 @@ const defaultBills = [
 
 function checkAdminAccess() {
 
-    const role = localStorage.getItem("userRole");
+    const role = localStorage.getItem("userRole") ||
+        sessionStorage.getItem("userRole");
 
     const loggedIn =
         localStorage.getItem("adminLoggedIn") === "true" ||
@@ -398,14 +399,42 @@ function getApiBaseUrl() {
 }
 
 
+function getAuthToken() {
+
+    return localStorage.getItem("authToken") ||
+        sessionStorage.getItem("authToken") || "";
+
+}
+
+
+function endStaffSession() {
+
+    [localStorage, sessionStorage].forEach(storage => {
+        [
+            "authToken", "loggedInUser", "displayName", "userRole",
+            "isLoggedIn", "adminLoggedIn", "employeeLoggedIn", "authExpiresAt"
+        ].forEach(key => storage.removeItem(key));
+    });
+    window.location.replace("role-selection.html");
+
+}
+
+
 async function apiRequest(path) {
+
+    const token = getAuthToken();
+    if (!token) {
+        endStaffSession();
+        throw new Error("Please log in again.");
+    }
 
     const response = await fetch(
         `${getApiBaseUrl()}${path}`,
         {
             method: "GET",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
             }
         }
     );
@@ -416,6 +445,11 @@ async function apiRequest(path) {
         result = await response.json();
     } catch (error) {
         console.error("The server response could not be read.", error);
+    }
+
+    if (response.status === 401 || response.status === 403) {
+        endStaffSession();
+        throw new Error("Your staff session expired. Please log in again.");
     }
 
     if (!response.ok) {
