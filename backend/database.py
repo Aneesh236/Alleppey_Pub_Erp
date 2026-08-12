@@ -83,6 +83,15 @@ class StaffUser(Base):
     )
 
 
+class AppSetting(Base):
+    """Internal settings used for safe database migrations."""
+
+    __tablename__ = "app_settings"
+
+    key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)
+
+
 class AuditLog(Base):
     __tablename__ = "audit_logs"
 

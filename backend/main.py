@@ -19,6 +19,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import (
+    AppSetting,
     AuditLog,
     Bill,
     BillItem,
@@ -54,6 +55,14 @@ TOKEN_LIFETIME_HOURS = 8
 BEARER_SCHEME = HTTPBearer(auto_error=False)
 
 
+def password_matches(password: str, password_hash: str) -> bool:
+    """Return False for old or malformed hashes instead of stopping startup."""
+    try:
+        return PASSWORD_HASH.verify(password, password_hash)
+    except Exception:
+        return False
+
+
 def seed_staff_users() -> None:
     configured_users = [
         {
@@ -75,22 +84,54 @@ def seed_staff_users() -> None:
             if not configured_user["password"]:
                 continue
 
+            username = configured_user["username"]
             existing_user = db.scalar(
                 select(StaffUser).where(
-                    StaffUser.username == configured_user["username"]
+                    StaffUser.username == username
                 )
             )
+
+            marker_key = f"bootstrap-password::{username.lower()}"
+            password_marker = db.get(AppSetting, marker_key)
+            environment_password_changed = (
+                password_marker is None
+                or not password_matches(
+                    configured_user["password"],
+                    password_marker.value,
+                )
+            )
+
             if existing_user is None:
+                existing_user = StaffUser(
+                    username=username,
+                    password_hash=PASSWORD_HASH.hash(
+                        configured_user["password"]
+                    ),
+                    role=configured_user["role"],
+                    display_name=configured_user["display_name"],
+                    is_active=True,
+                )
+                db.add(existing_user)
+            elif environment_password_changed:
+                existing_user.password_hash = PASSWORD_HASH.hash(
+                    configured_user["password"]
+                )
+                existing_user.role = configured_user["role"]
+                existing_user.display_name = configured_user["display_name"]
+                existing_user.is_active = True
+
+            if password_marker is None:
                 db.add(
-                    StaffUser(
-                        username=configured_user["username"],
-                        password_hash=PASSWORD_HASH.hash(
-                            configured_user["password"]
-                        ),
-                        role=configured_user["role"],
-                        display_name=configured_user["display_name"],
+                    AppSetting(
+                        key=marker_key,
+                        value=PASSWORD_HASH.hash(configured_user["password"]),
                     )
                 )
+            elif environment_password_changed:
+                password_marker.value = PASSWORD_HASH.hash(
+                    configured_user["password"]
+                )
+
         db.commit()
 
 
